@@ -56,7 +56,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="sidebar-bottom">
           <div className="foundation">
-            <span>FOUNDATION · 01</span>
+            <span>PRODUCT LIBRARY · 02</span>
             <p>
               A considered start.
               <br />
@@ -65,10 +65,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <div className="progress">
               <i />
             </div>
-            <small>Product library foundation</small>
+            <small>Product management · Milestone 02</small>
           </div>
           <div className="demo-dot">
-            Demo workspace <ArrowUpRight size={14} />
+            Local workspace <ArrowUpRight size={14} />
           </div>
         </div>
       </aside>
@@ -89,12 +89,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </strong>
           </span>
           <span className="demo-label">
-            SAMPLE DATA <span>·</span> LOCAL PREVIEW
+            LOCAL STORAGE <span>·</span> LOCAL PREVIEW
           </span>
         </header>
         <main id="main">{children}</main>
         <footer>
-          Tile Catalogue <span>Foundation milestone · Sample data only</span>
+          Tile Catalogue <span>Product library · Saved locally</span>
         </footer>
       </div>
     </div>

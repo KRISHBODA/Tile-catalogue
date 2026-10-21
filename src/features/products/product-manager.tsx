@@ -1,25 +1,43 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Search,
   SlidersHorizontal,
-  ArrowDownAZ,
-  ArrowUpAZ,
   ChevronLeft,
   ChevronRight,
-  X,
-  ArrowUpRight,
-  Layers,
   Check,
-  ImageOff,
   Info,
+  Plus,
+  Columns3,
+  Download,
+  Pencil,
+  RefreshCw,
+  X,
 } from "lucide-react";
 import { Button, Badge } from "@/components/ui/primitives";
-import { type Product, sizeLabel } from "./types";
+import type { Product, ProductDraft } from "./types";
 import { PAGE_SIZE, readQuery, queryProducts } from "./query";
-export function ProductManager({ products }: { products: Product[] }) {
+import { ProductTable } from "./product-table";
+import { ProductEditor } from "./product-editor";
+import { ProductDetails } from "./product-details";
+import { BulkEditor } from "./bulk-editor";
+import { ColumnPicker, useColumns } from "./columns";
+import { downloadCsv } from "./export";
+export function ProductManager({
+  products: initialProducts,
+}: {
+  products: Product[];
+}) {
+  const [products, setProducts] = useState(initialProducts);
+  const [editor, setEditor] = useState<Product | null | undefined>(undefined);
+  const [columnPicker, setColumnPicker] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [advanced, setAdvanced] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+  const columnPrefs = useColumns();
   const pathname = usePathname(),
     params = useSearchParams();
   const query = readQuery(new URLSearchParams(params.toString()));
@@ -32,8 +50,7 @@ export function ProductManager({ products }: { products: Product[] }) {
   if (selection.view !== view) setSelection({ view, ids: [] });
   const selected = selection.view === view ? selection.ids : [];
   const [detail, setDetail] = useState<Product | null>(null);
-  const dialog = useRef<HTMLDialogElement>(null);
-  const selectAll = useRef<HTMLInputElement>(null);
+
   const update = (key: string, value: string) => {
     const next = new URLSearchParams(params.toString());
     if (value) next.set(key, value);
@@ -45,11 +62,6 @@ export function ProductManager({ products }: { products: Product[] }) {
       `${pathname}?${next}`,
     );
   };
-  useEffect(() => {
-    if (selectAll.current)
-      selectAll.current.indeterminate =
-        selected.length > 0 && selected.length < visible.length;
-  }, [selected.length, visible.length]);
   const toggle = (id: string) =>
     setSelection({
       view,
@@ -57,13 +69,89 @@ export function ProductManager({ products }: { products: Product[] }) {
         ? selected.filter((x) => x !== id)
         : [...selected, id],
     });
-  const openDetails = (product: Product) => {
-    setDetail(product);
-    dialog.current?.showModal();
+  const openDetails = (product: Product) => setDetail(product);
+  const edit = (product: Product | null) => {
+    setDetail(null);
+    setEditor(product);
   };
-  const filterCount = ["size", "collection", "surface", "status"].filter((k) =>
-    params.get(k),
-  ).length;
+  const filterKeys = [
+    "size",
+    "collection",
+    "surface",
+    "status",
+    "body",
+    "thickness",
+    "tag",
+    "colour",
+    "pdf",
+    "privacy",
+    "preview",
+  ];
+  const filterCount = filterKeys.filter((k) => params.get(k)).length;
+  const selectedProducts = visible.filter((p) => selected.includes(p.id));
+  async function mutate(operation: string, payload: Record<string, unknown>) {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ operation, ...payload }),
+      });
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.error || "Could not save changes.");
+      setProducts(result.products);
+      setSelection({ view, ids: [] });
+      return result.product as Product | undefined;
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function save(data: ProductDraft) {
+    const saved = await mutate(editor ? "update" : "create", {
+      data,
+      ...(editor
+        ? { target: { id: editor.id, revision: editor.revision } }
+        : {}),
+    });
+    if (saved) {
+      const next = new URLSearchParams({ q: saved.code });
+      window.history.pushState(null, "", `${pathname}?${next}`);
+    }
+    setEditor(undefined);
+    setNotice(`${saved?.name || "Product"} saved locally.`);
+  }
+  async function refresh() {
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/products", { cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Refresh failed.");
+      setProducts(result.products);
+      setSelection({ view, ids: [] });
+      setNotice("Library refreshed.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Refresh failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function duplicate(product: Product) {
+    try {
+      const copy = await mutate("duplicate", {
+        target: { id: product.id, revision: product.revision },
+      });
+      setDetail(null);
+      setNotice(`Created ${copy?.code} as a draft.`);
+      if (copy) setEditor(copy);
+    } catch (e) {
+      setDetail(null);
+      setError(e instanceof Error ? e.message : "Could not duplicate product.");
+    }
+  }
   return (
     <>
       <div className="page-heading">
@@ -74,11 +162,13 @@ export function ProductManager({ products }: { products: Product[] }) {
           </h1>
           <p>A considered collection. Every detail, in one place.</p>
         </div>
-        <div className="heading-note">
-          <Layers size={17} />
-          <span>
-            Foundation milestone<small>Explore your sample library</small>
-          </span>
+        <div className="heading-actions">
+          <Button disabled={busy} onClick={refresh}>
+            <RefreshCw size={14} /> Refresh
+          </Button>
+          <Button className="primary" onClick={() => edit(null)}>
+            <Plus size={15} /> Add product
+          </Button>
         </div>
       </div>
       <div className="summary-grid">
@@ -111,20 +201,58 @@ export function ProductManager({ products }: { products: Product[] }) {
         <div className="summary-note">
           <Info size={17} />
           <p>
-            A preview of what’s possible.
+            Your library, saved locally.
             <small>
-              Illustrative products and textures. No changes are saved.
+              Includes editable sample designs. New products and uploads are
+              saved on this computer.
             </small>
           </p>
         </div>
       </div>
+      {(notice || error) && (
+        <div
+          className={`library-notice ${error ? "error" : ""}`}
+          role={error ? "alert" : "status"}
+        >
+          <span>{error || notice}</span>
+          <button
+            aria-label="Dismiss message"
+            onClick={() => {
+              setNotice("");
+              setError("");
+            }}
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
       <section className="library" aria-label="Product library">
         <div className="library-heading">
           <div>
             <h2>All products</h2>
             <span>Organise. Inspect. Find your next selection.</span>
           </div>
-          <Badge>Sample library</Badge>
+          <div className="library-tools">
+            <Badge>Local library</Badge>
+            <Button onClick={() => setColumnPicker(true)}>
+              <Columns3 size={14} /> Columns
+            </Button>
+            <Button
+              disabled={!filtered.length}
+              onClick={() => {
+                const rows = selectedProducts.length
+                  ? selectedProducts
+                  : filtered;
+                downloadCsv(rows);
+                setNotice(
+                  `Exported ${rows.length} designs as CSV (one row per variant).`,
+                );
+              }}
+            >
+              <Download size={14} />{" "}
+              {selectedProducts.length ? "Export selected" : "Export results"}
+            </Button>
+          </div>
         </div>
         <div className="toolbar">
           <label className="search">
@@ -149,11 +277,19 @@ export function ProductManager({ products }: { products: Product[] }) {
               onChange={(e) => update("size", e.target.value)}
             >
               <option value="">All sizes</option>
-              {["600x600", "600x1200", "1200x1200", "1200x2400"].map((s) => (
-                <option key={s} value={s}>
-                  {s.replace("x", " × ")} mm
-                </option>
-              ))}
+              {[
+                ...new Set(
+                  products.flatMap((p) =>
+                    p.variants.map((v) => `${v.widthMm}x${v.heightMm}`),
+                  ),
+                ),
+              ]
+                .sort()
+                .map((s) => (
+                  <option key={s} value={s}>
+                    {s.replace("x", " × ")} mm
+                  </option>
+                ))}
             </select>
           </label>
           {(["collection", "surface", "status"] as const).map((key) => (
@@ -187,6 +323,13 @@ export function ProductManager({ products }: { products: Product[] }) {
             </label>
           ))}
           <Button
+            aria-expanded={advanced}
+            onClick={() => setAdvanced(!advanced)}
+          >
+            <SlidersHorizontal size={14} /> More filters
+            {filterCount > 0 ? ` (${filterCount})` : ""}
+          </Button>
+          <Button
             className="clear"
             disabled={!query.q && !filterCount}
             onClick={() => window.history.pushState(null, "", pathname)}
@@ -194,6 +337,72 @@ export function ProductManager({ products }: { products: Product[] }) {
             Clear filters
           </Button>
         </div>
+        {advanced && (
+          <div className="advanced-filters">
+            {(
+              [
+                [
+                  "body",
+                  "Body",
+                  [
+                    ...new Set(
+                      products.flatMap((p) => p.variants.map((v) => v.body)),
+                    ),
+                  ],
+                ],
+                [
+                  "thickness",
+                  "Thickness (mm)",
+                  [
+                    ...new Set(
+                      products.flatMap((p) =>
+                        p.variants.map((v) => String(v.thicknessMm)),
+                      ),
+                    ),
+                  ],
+                ],
+                ["tag", "Tag", [...new Set(products.flatMap((p) => p.tags))]],
+                [
+                  "colour",
+                  "Colour",
+                  [...new Set(products.flatMap((p) => p.colours))],
+                ],
+              ] as [string, string, string[]][]
+            ).map(([key, label, options]) => (
+              <label key={key}>
+                {label}
+                <select
+                  value={params.get(key) || ""}
+                  onChange={(e) => update(key, e.target.value)}
+                >
+                  <option value="">All</option>
+                  {options.sort().map((v) => (
+                    <option key={v}>{v}</option>
+                  ))}
+                </select>
+              </label>
+            ))}
+            {(
+              [
+                ["pdf", "Show in PDF"],
+                ["privacy", "Private"],
+                ["preview", "Has room preview"],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key}>
+                {label}
+                <select
+                  value={params.get(key) || ""}
+                  onChange={(e) => update(key, e.target.value)}
+                >
+                  <option value="">All</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </label>
+            ))}
+          </div>
+        )}
         <div className="selection-bar">
           <span>
             <strong>{filtered.length}</strong> designs{" "}
@@ -206,7 +415,10 @@ export function ProductManager({ products }: { products: Product[] }) {
           <span aria-live="polite">
             {selected.length > 0 ? (
               <>
-                <Check size={14} /> {selected.length} selected{" "}
+                <Check size={14} /> {selectedProducts.length} selected{" "}
+                <Button onClick={() => setBulkOpen(true)} disabled={busy}>
+                  <Pencil size={13} /> Bulk edit
+                </Button>
                 <button onClick={() => setSelection({ view, ids: [] })}>
                   Clear
                 </button>
@@ -216,164 +428,20 @@ export function ProductManager({ products }: { products: Product[] }) {
             )}
           </span>
         </div>
-        <div
-          className="table-scroll"
-          role="region"
-          aria-label="Scrollable product table"
-          tabIndex={0}
-        >
-          <table>
-            <thead>
-              <tr>
-                <th className="check-cell">
-                  <input
-                    ref={selectAll}
-                    type="checkbox"
-                    aria-label="Select all products on this page"
-                    checked={
-                      visible.length > 0 && selected.length === visible.length
-                    }
-                    disabled={!visible.length}
-                    onChange={(e) =>
-                      setSelection({
-                        view,
-                        ids: e.target.checked ? visible.map((p) => p.id) : [],
-                      })
-                    }
-                  />
-                </th>
-                <th>Tile face</th>
-                <th>Room</th>
-                <th
-                  aria-sort={query.sort === "asc" ? "ascending" : "descending"}
-                >
-                  <button
-                    className="sort"
-                    onClick={() =>
-                      update("sort", query.sort === "asc" ? "desc" : "asc")
-                    }
-                  >
-                    Design{" "}
-                    {query.sort === "asc" ? (
-                      <ArrowDownAZ size={15} />
-                    ) : (
-                      <ArrowUpAZ size={15} />
-                    )}
-                  </button>
-                </th>
-                <th>
-                  Size <small>mm</small>
-                </th>
-                <th>Collection</th>
-                <th>Surface</th>
-                <th>
-                  THK <small>mm</small>
-                </th>
-                <th>Faces</th>
-                <th>Status</th>
-                <th>
-                  <span className="sr-only">Details</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((p) => {
-                const v =
-                  p.variants.find(
-                    (v) =>
-                      (!query.size ||
-                        `${v.widthMm}x${v.heightMm}` === query.size) &&
-                      (!query.surface || v.surface === query.surface),
-                  ) || p.variants[0];
-                return (
-                  <tr
-                    key={p.id}
-                    className={selected.includes(p.id) ? "selected" : ""}
-                  >
-                    <td className="check-cell">
-                      <input
-                        type="checkbox"
-                        aria-label={`Select ${p.name}`}
-                        checked={selected.includes(p.id)}
-                        onChange={() => toggle(p.id)}
-                      />
-                    </td>
-                    <td>
-                      <button
-                        className="thumb-button"
-                        aria-label={`Inspect ${p.name}`}
-                        onClick={() => openDetails(p)}
-                      >
-                        <Image
-                          src={p.faces[0].previewUrl}
-                          width={48}
-                          height={48}
-                          alt={p.faces[0].alt}
-                          unoptimized
-                        />
-                      </button>
-                    </td>
-                    <td>
-                      <div
-                        className="missing-room"
-                        title="No room preview supplied"
-                      >
-                        <ImageOff size={16} />
-                        <span>None</span>
-                      </div>
-                    </td>
-                    <td>
-                      <button
-                        className="design-name"
-                        onClick={() => openDetails(p)}
-                      >
-                        {p.name}
-                      </button>
-                      <small className="code">
-                        {p.code}
-                        {p.variants.length > 1 && (
-                          <span> · {p.variants.length} variants</span>
-                        )}
-                      </small>
-                    </td>
-                    <td className="size-cell">{sizeLabel(v)}</td>
-                    <td>{p.collection}</td>
-                    <td>{v.surface}</td>
-                    <td>{v.thicknessMm}</td>
-                    <td>{p.faces.length}</td>
-                    <td>
-                      <span className={`status ${p.status.toLowerCase()}`}>
-                        <span />
-                        {p.status}
-                      </span>
-                    </td>
-                    <td>
-                      <Button
-                        className="icon-button"
-                        aria-label={`View details for ${p.name}`}
-                        onClick={() => openDetails(p)}
-                      >
-                        <ArrowUpRight size={17} />
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {!visible.length && (
-            <div className="empty">
-              <Search size={28} />
-              <h3>No designs found</h3>
-              <p>Try a different name or clear your filters.</p>
-              <Button
-                onClick={() => window.history.pushState(null, "", pathname)}
-              >
-                Clear filters
-              </Button>
-            </div>
-          )}
-        </div>
+        <ProductTable
+          products={visible}
+          selected={selected}
+          columns={columnPrefs.visible}
+          query={query}
+          onToggle={toggle}
+          onSelectAll={(checked) =>
+            setSelection({ view, ids: checked ? visible.map((p) => p.id) : [] })
+          }
+          onSort={() => update("sort", query.sort === "asc" ? "desc" : "asc")}
+          onDetails={openDetails}
+          onEdit={edit}
+          onReset={() => window.history.pushState(null, "", pathname)}
+        />
         <div className="pagination">
           <span>
             {filtered.length
@@ -418,122 +486,52 @@ export function ProductManager({ products }: { products: Product[] }) {
       <div className="below-table">
         <Info size={14} />
         <span>
-          Sample data only. Selection is page-specific and clears when you
-          search, filter, sort or change pages.
+          Saved locally. Selection is page-specific and clears when you search,
+          filter, sort or change pages.
         </span>
       </div>
-      <dialog
-        ref={dialog}
-        className="details"
-        aria-labelledby="detail-title"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) dialog.current?.close();
-        }}
-      >
-        {detail && (
-          <>
-            <header>
-              <span className="eyebrow">DESIGN DETAILS · READ ONLY</span>
-              <Button
-                className="icon-button"
-                aria-label="Close product details"
-                onClick={() => dialog.current?.close()}
-              >
-                <X size={19} />
-              </Button>
-            </header>
-            <div className="detail-body">
-              <Badge>{detail.collection}</Badge>
-              <h2 id="detail-title">{detail.name}</h2>
-              <p className="muted">
-                {detail.code} · Illustrative sample product
-              </p>
-              <Image
-                className="hero-tile"
-                src={detail.faces[0].previewUrl}
-                width={600}
-                height={400}
-                alt={detail.faces[0].alt}
-                unoptimized
-              />
-              <h3>
-                Technical variants{" "}
-                <span className="muted">({detail.variants.length})</span>
-              </h3>
-              {detail.variants.map((v) => (
-                <dl key={v.id} className="specs">
-                  <div>
-                    <dt>Size</dt>
-                    <dd>{sizeLabel(v)} mm</dd>
-                  </div>
-                  <div>
-                    <dt>Surface</dt>
-                    <dd>{v.surface}</dd>
-                  </div>
-                  <div>
-                    <dt>Thickness</dt>
-                    <dd>{v.thicknessMm} mm</dd>
-                  </div>
-                  <div>
-                    <dt>Body</dt>
-                    <dd>{v.body}</dd>
-                  </div>
-                </dl>
-              ))}
-              <h3>
-                Tile faces{" "}
-                <span className="muted">({detail.faces.length})</span>
-              </h3>
-              <div className="face-grid">
-                {detail.faces.map((f, i) => (
-                  <figure key={f.id}>
-                    <Image
-                      src={f.previewUrl}
-                      width={130}
-                      height={130}
-                      alt={f.alt}
-                      unoptimized
-                    />
-                    <figcaption>
-                      Face {String(i + 1).padStart(2, "0")}
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-              <p className="asset-note">
-                Illustrative texture reused across faces. Original-resolution
-                assets and room previews have not been supplied.
-              </p>
-              <dl className="specs">
-                <div>
-                  <dt>Status</dt>
-                  <dd>{detail.status}</dd>
-                </div>
-                <div>
-                  <dt>Show in PDF</dt>
-                  <dd>{detail.showInPdf ? "Yes" : "No"}</dd>
-                </div>
-                <div>
-                  <dt>Private</dt>
-                  <dd>{detail.private ? "Yes" : "No"}</dd>
-                </div>
-                <div>
-                  <dt>Room preview</dt>
-                  <dd>Not supplied</dd>
-                </div>
-              </dl>
-            </div>
-            <div className="detail-footer">
-              <Button
-                className="primary"
-                onClick={() => dialog.current?.close()}
-              >
-                Done
-              </Button>
-            </div>
-          </>
-        )}
-      </dialog>
+      {detail && (
+        <ProductDetails
+          product={detail}
+          onClose={() => setDetail(null)}
+          onEdit={() => edit(detail)}
+          onDuplicate={() => duplicate(detail)}
+          busy={busy}
+        />
+      )}
+      {editor !== undefined && (
+        <ProductEditor
+          key={editor?.id || "new"}
+          product={editor}
+          collections={[...new Set(products.map((p) => p.collection))].sort()}
+          onClose={() => setEditor(undefined)}
+          onSave={save}
+        />
+      )}
+      {columnPicker && (
+        <ColumnPicker
+          visible={columnPrefs.visible}
+          onChange={columnPrefs.set}
+          onClose={() => setColumnPicker(false)}
+        />
+      )}
+      {bulkOpen && (
+        <BulkEditor
+          products={selectedProducts}
+          onClose={() => setBulkOpen(false)}
+          onSave={async (changes) => {
+            await mutate("bulk", {
+              targets: selectedProducts.map((p) => ({
+                id: p.id,
+                revision: p.revision,
+              })),
+              changes,
+            });
+            setBulkOpen(false);
+            setNotice("Selected products updated.");
+          }}
+        />
+      )}
     </>
   );
 }

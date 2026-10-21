@@ -8,7 +8,7 @@
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "node --experimental-strip-types --test src/features/products/query.test.ts"
+    "test": "node --experimental-strip-types --test src/features/products/*.test.ts"
   },
   "dependencies": {
     "next": "16.4.2",

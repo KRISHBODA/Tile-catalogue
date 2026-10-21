@@ -46,6 +46,7 @@ export const sampleProducts: Product[] = names.map((name, i) => {
     status: i % 7 === 4 ? "Draft" : i % 9 === 6 ? "Archived" : "Active",
     showInPdf: i % 7 !== 4,
     private: false,
+    has360: false,
     variants: [
       {
         id: `variant-${i}`,

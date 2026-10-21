@@ -138,6 +138,7 @@ export function validateProduct(value: unknown): ProductDraft {
     ),
     showInPdf: bool(p.showInPdf, "Show in PDF"),
     private: bool(p.private, "Private"),
+    has360: p.has360 === undefined ? false : bool(p.has360, "360"),
     variants,
     faces: media(p.faces, true),
     media: media(p.media, false),

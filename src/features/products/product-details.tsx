@@ -94,6 +94,7 @@ export function ProductDetails({
                   <dt>Private</dt>
                   <dd>{p.private ? "Yes" : "No"}</dd>
                 </div>
+                <div><dt>360</dt><dd>{p.has360 ? "Yes" : "No"}</dd></div>
               </dl>
               <h3>Technical variants ({p.variants.length})</h3>
               {p.variants.map((v) => (
@@ -150,7 +151,7 @@ export function ProductDetails({
                     No{" "}
                     {tab === "Design"
                       ? "tile faces"
-                      : "room previews or closeups"}{" "}
+                      : "preview images or closeups"}{" "}
                     added yet.
                   </p>
                   <Button onClick={onEdit}>Add images</Button>
@@ -175,7 +176,7 @@ export function ProductDetails({
                       {tab === "Design"
                         ? `Face ${i + 1}`
                         : a.role === "room-preview"
-                          ? "Room preview"
+                          ? "Preview"
                           : "Closeup"}
                     </small>
                   </button>

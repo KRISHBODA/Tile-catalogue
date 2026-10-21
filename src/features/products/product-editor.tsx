@@ -22,6 +22,7 @@ const blank = (): ProductDraft => ({
   status: "Draft",
   showInPdf: false,
   private: false,
+  has360: false,
   variants: [
     {
       id: crypto.randomUUID(),
@@ -61,7 +62,6 @@ export function ProductEditor({
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [role, setRole] = useState<MediaRole>("tile-face");
   const [tags, setTags] = useState(draft.tags.join(", "));
   const [colours, setColours] = useState(draft.colours.join(", "));
   function patch<K extends keyof ProductDraft>(key: K, value: ProductDraft[K]) {
@@ -101,7 +101,7 @@ export function ProductEditor({
       setBusy(false);
     }
   }
-  async function upload(files: FileList | null) {
+  async function upload(files: File[], role: MediaRole) {
     if (!files?.length) return;
     setError("");
     const key = role === "tile-face" ? "faces" : "media";
@@ -137,6 +137,26 @@ export function ProductEditor({
     } finally {
       setUploading(false);
     }
+  }
+  function uploadControl(role: MediaRole, label: string) {
+    return (
+      <label className="upload-input">
+        <Upload size={17} aria-hidden="true" />
+        <span>{label}</span>
+        <input
+          type="file"
+          aria-label={label}
+          accept="image/png,image/jpeg,image/webp"
+          multiple
+          disabled={busy || uploading}
+          onChange={(e) => {
+            const files = Array.from(e.currentTarget.files ?? []);
+            void upload(files, role);
+            e.target.value = "";
+          }}
+        />
+      </label>
+    );
   }
   const allMedia = [...draft.faces, ...draft.media];
   return (
@@ -178,10 +198,16 @@ export function ProductEditor({
               : "Add a design to your library. Images can be added now or later."}
           </p>
           {error && (
-            <div ref={errorRef} tabIndex={-1} className="form-error" role="alert">
+            <div
+              ref={errorRef}
+              tabIndex={-1}
+              className="form-error"
+              role="alert"
+            >
               {error}
             </div>
           )}
+          {uploading && <p role="status">Uploading images…</p>}
           <fieldset disabled={busy || uploading}>
             {tab === "Properties" && (
               <div
@@ -236,6 +262,13 @@ export function ProductEditor({
                       <option>Draft</option>
                       <option>Active</option>
                       <option>Archived</option>
+                    </select>
+                  </label>
+                  <label>
+                    360
+                    <select value={draft.has360 ? "yes" : "no"} onChange={(e) => patch("has360", e.target.value === "yes")}>
+                      <option value="no">No</option>
+                      <option value="yes">Yes</option>
                     </select>
                   </label>
                   <label>
@@ -303,6 +336,47 @@ export function ProductEditor({
                     </span>
                   </label>
                 </div>
+                <section
+                  className="design-upload-options"
+                  aria-label="Design images"
+                >
+                  <h3>Design images</h3>
+                  <p>
+                    Add a tile-face photo and a preview image now, or manage
+                    them in the Media tab.
+                  </p>
+                  <div className="upload-bar">
+                    {uploadControl("tile-face", "Upload tile faces")}
+                    {uploadControl("room-preview", "Upload preview")}
+                  </div>
+                  <p className="asset-note" role="status">
+                    {draft.faces.length} tile faces ·{" "}
+                    {
+                      draft.media.filter((a) => a.role === "room-preview")
+                        .length
+                    }{" "}
+                    preview images attached
+                  </p>
+                  <div className="attached-image-list" aria-label="Attached design images">
+                    {allMedia.map((asset) => (
+                      <article key={asset.id}>
+                        <Image src={asset.previewUrl} width={220} height={124} alt={asset.alt} unoptimized />
+                        <div>
+                          <strong>{asset.role === "tile-face" ? "Tile face" : asset.role === "room-preview" ? "Preview" : "Closeup"}</strong>
+                          <span>{asset.alt}</span>
+                          <Button type="button" onClick={() => {
+                            const key = asset.role === "tile-face" ? "faces" : "media";
+                            patch(key, draft[key].filter((a) => a.id !== asset.id));
+                          }} aria-label={`Remove ${asset.alt}`}>Remove</Button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                  <p className="asset-note">
+                    PNG, JPEG or WebP · Up to 10 MB each. Save the design to
+                    keep its images.
+                  </p>
+                </section>
               </div>
             )}
             {tab === "Variants" && (
@@ -443,41 +517,18 @@ export function ProductEditor({
                 aria-labelledby="tab-Media"
               >
                 <div className="upload-bar">
-                  <label>
-                    Media role
-                    <select
-                      value={role}
-                      onChange={(e) => setRole(e.target.value as MediaRole)}
-                    >
-                      <option value="tile-face">Tile face</option>
-                      <option value="room-preview">Room preview</option>
-                      <option value="closeup">Closeup</option>
-                    </select>
-                  </label>
-                  <label className="upload-input">
-                    <Upload size={17} />
-                    <span>Add images</span>
-                    <input
-                      type="file"
-                      aria-label="Upload product images"
-                      accept="image/png,image/jpeg,image/webp"
-                      multiple
-                      onChange={(e) => {
-                        void upload(e.target.files);
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
+                  {uploadControl("tile-face", "Upload tile faces")}
+                  {uploadControl("room-preview", "Upload preview")}
+                  {uploadControl("closeup", "Upload closeups")}
                 </div>
                 <p className="asset-note">
                   PNG, JPEG or WebP · Up to 10 MB each. Originals retain their
                   colours. Images are stored locally; save the product to attach
                   them.
                 </p>
-                {uploading && <p role="status">Uploading images…</p>}
                 {!allMedia.length && (
                   <div className="media-empty">
-                    No images yet. Add tile faces, room previews or closeups
+                    No images yet. Add tile faces, preview images or closeups
                     above.
                   </div>
                 )}
@@ -496,7 +547,7 @@ export function ProductEditor({
                           {a.role === "tile-face"
                             ? "Tile face"
                             : a.role === "room-preview"
-                              ? "Room preview"
+                              ? "Preview"
                               : "Closeup"}
                         </small>
                         <Button

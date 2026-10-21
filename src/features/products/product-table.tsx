@@ -68,7 +68,7 @@ export function ProductTable({
               />
             </th>
             {has("tile") && <th>Tile face</th>}
-            {has("room") && <th>Room</th>}
+            {has("room") && <th>Preview</th>}
             <th aria-sort={query.sort === "asc" ? "ascending" : "descending"}>
               <button className="sort" onClick={onSort}>
                 Design{" "}
@@ -98,6 +98,7 @@ export function ProductTable({
             {has("body") && <th>Body</th>}
             {has("pdf") && <th>Show in PDF</th>}
             {has("private") && <th>Private</th>}
+            {has("360") && <th>360</th>}
             <th>
               <span className="sr-only">Actions</span>
             </th>
@@ -127,7 +128,7 @@ export function ProductTable({
                   <td>
                     {face ? (
                       <button
-                        className="thumb-button tile-face-preview"
+                        className="thumb-button product-image-preview"
                         aria-label={`Inspect ${p.name}`}
                         onClick={() => onDetails(p)}
                       >
@@ -140,7 +141,10 @@ export function ProductTable({
                         />
                       </button>
                     ) : (
-                      <div className="missing-room tile-face-preview" title="No tile image">
+                      <div
+                        className="missing-room product-image-preview"
+                        title="No tile image"
+                      >
                         <ImageOff size={16} />
                         <span>None</span>
                       </div>
@@ -151,22 +155,22 @@ export function ProductTable({
                   <td>
                     {room ? (
                       <button
-                        className="thumb-button"
-                        aria-label={`Room preview for ${p.name}`}
+                        className="thumb-button product-image-preview"
+                        aria-label={`Preview for ${p.name}`}
                         onClick={() => onDetails(p)}
                       >
                         <Image
                           src={room.previewUrl}
-                          width={48}
-                          height={48}
+                          width={220}
+                          height={124}
                           alt={room.alt}
                           unoptimized
                         />
                       </button>
                     ) : (
                       <div
-                        className="missing-room"
-                        title="No room preview supplied"
+                        className="missing-room product-image-preview"
+                        title="No preview image supplied"
                       >
                         <ImageOff size={16} />
                         <span>None</span>
@@ -209,6 +213,7 @@ export function ProductTable({
                 {has("body") && <td>{v.body}</td>}
                 {has("pdf") && <td>{p.showInPdf ? "Yes" : "No"}</td>}
                 {has("private") && <td>{p.private ? "Yes" : "No"}</td>}
+                {has("360") && <td>{p.has360 ? "Yes" : "No"}</td>}
                 <td>
                   <div className="row-actions">
                     <Button

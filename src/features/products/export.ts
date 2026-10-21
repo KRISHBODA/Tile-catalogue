@@ -22,6 +22,7 @@ export function productsCsv(products: Product[]) {
       "Show in PDF",
       "Private",
       "Description",
+      "360",
     ],
   ];
   for (const p of products)
@@ -42,6 +43,7 @@ export function productsCsv(products: Product[]) {
         p.showInPdf ? "Yes" : "No",
         p.private ? "Yes" : "No",
         p.description,
+        p.has360 ? "Yes" : "No",
       ]);
   return "\uFEFF" + rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
 }

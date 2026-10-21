@@ -386,7 +386,7 @@ export function ProductManager({
               [
                 ["pdf", "Show in PDF"],
                 ["privacy", "Private"],
-                ["preview", "Has room preview"],
+                ["preview", "Has preview image"],
               ] as const
             ).map(([key, label]) => (
               <label key={key}>

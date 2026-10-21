@@ -4,7 +4,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/primitives";
 export const columns = [
   ["tile", "Tile image"],
-  ["room", "Room preview"],
+  ["room", "Preview"],
   ["size", "Size"],
   ["collection", "Collection"],
   ["surface", "Surface"],
@@ -16,6 +16,7 @@ export const columns = [
   ["body", "Body"],
   ["pdf", "Show in PDF"],
   ["private", "Private"],
+  ["360", "360"],
 ] as const;
 export type Column = (typeof columns)[number][0];
 const defaults: Column[] = [
@@ -27,12 +28,20 @@ const defaults: Column[] = [
   "thickness",
   "faces",
   "status",
+  "360",
 ];
-const key = "tile-catalogue:columns:v1";
+const key = "tile-catalogue:columns:v2";
 const initial = JSON.stringify(defaults);
 function snapshot() {
   try {
-    return localStorage.getItem(key) || initial;
+    const saved = localStorage.getItem(key);
+    if (saved) return saved;
+    const previous = localStorage.getItem("tile-catalogue:columns:v1");
+    if (previous) {
+      const parsed = JSON.parse(previous);
+      if (Array.isArray(parsed)) return JSON.stringify([...new Set([...parsed, "360"])]);
+    }
+    return initial;
   } catch {
     return initial;
   }

@@ -1,6 +1,6 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
@@ -135,4 +135,45 @@ test("uploads reject non-image bytes and recognize supported formats", () => {
     "png",
   );
   assert.equal(imageExtension(Buffer.from("RIFFxxxxWEBP")), "webp");
+});
+
+test("new designs retain uploaded previews separately from tile faces", async () => {
+  const filename = "11111111-1111-4111-8111-111111111111.png";
+  await mkdir(path.join(folder, "media"), { recursive: true });
+  await writeFile(
+    path.join(folder, "media", filename),
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+  );
+  const preview = {
+    id: "preview-test",
+    role: "room-preview",
+    previewUrl: `/api/media/${filename}`,
+    originalUrl: `/api/media/${filename}`,
+    alt: "Uploaded preview",
+  };
+  const created = await saveProduct({
+    ...sampleProducts[0],
+    code: "TEST-PREVIEW",
+    media: [preview],
+  });
+  const saved = (await listProducts()).find((p) => p.id === created.id)!;
+  assert.equal(saved.media[0].role, "room-preview");
+  assert.equal(saved.media[0].previewUrl, preview.previewUrl);
+  assert.equal(saved.faces.length, sampleProducts[0].faces.length);
+  const updated = await saveProduct(
+    { ...saved, name: "Preview remains attached" },
+    created,
+  );
+  assert.deepEqual(updated.media, saved.media);
+});
+
+test("360 is a saved yes/no preference and defaults to no for older designs", async () => {
+  const { has360: omitted, ...legacy } = sampleProducts[0];
+  void omitted;
+  assert.equal(validateProduct(legacy).has360, false);
+  assert.throws(() => validateProduct({ ...legacy, has360: "yes" }), /yes or no/);
+  const created = await saveProduct({ ...legacy, code: "TEST-360", has360: true });
+  assert.equal((await listProducts()).find((p) => p.id === created.id)?.has360, true);
+  const edited = await saveProduct({ ...created, has360: false }, created);
+  assert.equal(edited.has360, false);
 });

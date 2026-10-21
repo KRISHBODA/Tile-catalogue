@@ -29,6 +29,7 @@ export interface Product {
   status: ProductStatus;
   showInPdf: boolean;
   private: boolean;
+  has360: boolean;
   variants: TechnicalVariant[];
   faces: MediaAsset[];
   media: MediaAsset[];

@@ -43,7 +43,7 @@ function all(db: DatabaseSync): Product[] {
   return db
     .prepare("SELECT payload FROM products ORDER BY code")
     .all()
-    .map((row) => JSON.parse(row.payload as string) as Product);
+    .map((row) => ({ has360: false, ...JSON.parse(row.payload as string) } as Product));
 }
 function get(db: DatabaseSync, id: string): Product {
   const row = db.prepare("SELECT payload FROM products WHERE id=?").get(id);
@@ -52,7 +52,7 @@ function get(db: DatabaseSync, id: string): Product {
       "This product no longer exists. Refresh the library.",
       404,
     );
-  return JSON.parse(row.payload as string) as Product;
+  return { has360: false, ...JSON.parse(row.payload as string) } as Product;
 }
 function transaction<T>(db: DatabaseSync, run: () => T): T {
   db.exec("BEGIN IMMEDIATE");

@@ -1,46 +1,43 @@
 # Tile Catalogue
 
-A local, sample-data foundation for a tile catalogue SaaS. Built with genuine Next.js App Router, React, strict TypeScript, Tailwind CSS and Lucide icons. The application interface uses black, white and neutral greys; sample material textures retain their natural tones.
+A local tile product library built with Next.js App Router, React and TypeScript. The interface is strictly monochrome; uploaded product images retain their original colours. The restored workspace design is preserved.
 
 ## Run locally
 
-Use Node.js 22.18 or newer (for the built-in TypeScript test runner) and npm. Install with `npm ci`, then run `npm run dev` and open http://127.0.0.1:3000/products. For a production preview, run `npm run build` followed by `npm start`.
+Use Node.js 22.18+ and npm. Run `npm ci`, then `npm run dev`. Open http://127.0.0.1:3000/products. Production preview: `npm run build`, then `npm start`. Build uses Webpack because this environment restricts Turbopack worker creation.
 
-Scripts: `dev`, `build`, `start`, `typecheck`, `lint`, and `test`. The production build uses the supported Webpack compiler because Turbopack worker creation is restricted in this environment. Use only npm; package-lock.json pins dependency versions.
+Checks: `npm run typecheck`, `npm run lint`, `npm test`.
 
-## This milestone
+## Product-management milestone
 
-- Responsive workspace shell, mobile navigation, development identity and demo indicator.
-- 20 varied sample designs with multiple technical variants and tile faces.
-- Name/code search; combined size, collection, surface and status filters; reset; ascending/descending design sorting; eight products per page; empty results.
-- Search, filters, sorting and pagination live in URL parameters, supporting refresh and browser history.
-- Individual selection and select-all apply to visible rows only. Selection clears whenever the URL view changes. No selection persists across reloads.
-- Read-only native dialog with images, variant specifications and media availability. Escape closes it, focus is trapped by the browser and restored to the opening control.
-- Shared upcoming-milestone page for Catalogue Builder and Catalogue History.
+- Create, edit and duplicate designs; unique design codes and revision checks prevent accidental overwrites.
+- Edit descriptions, tags, colour names, collections, status, and PDF/private preferences.
+- Add multiple size, thickness, surface and body variants.
+- Upload PNG, JPEG and WebP files up to 10 MB each as tile faces, room previews or closeups. Select a cover face, edit image descriptions, detach images and download originals.
+- Search, sort, paginate and combine filters, including advanced variant and media filters. Variant criteria must match the same variant.
+- Configure visible table columns, saved in this browser.
+- Select visible rows and bulk change status or PDF/private preferences. Archive is reversible through status editing. Bulk changes are atomic.
+- Export selected products or all filtered results to CSV, with one row per variant and spreadsheet formula protection.
+- Inspect properties, technical variants and media in the detail dialog.
+
+## Local persistence
+
+Products are stored in `data/catalogue.sqlite` using Node's built-in SQLite driver; uploaded originals live in `data/media`. The data directory is ignored by Git. `TILE_DATA_DIR` can override its location. Twenty clearly labelled sample designs are seeded once. Refresh reads the latest saved library; saving checks revisions to detect concurrent edits.
+
+Back up the entire data directory with the app stopped. Removing an attachment does not delete its original file. Cancelled uploads may also leave unattached files; automatic media cleanup is not implemented. Preview and original currently use the same file, so large libraries will need thumbnail processing and server-side pagination.
+
+The reference ZIP supplies feature/layout references, not product photography. Bundled SVG textures are illustrations. No reference branding or personal information is copied.
+
+## Scope
+
+This is a local development workspace, not a deployed multi-tenant service. API mutations require the matching local browser origin. There is no authentication, user permission system, cloud storage, client management, billing or PDF generation yet. Private and Show in PDF are stored preferences for future sharing/catalogue features; they do not enforce access control. Catalogue Builder and Catalogue History remain upcoming milestones.
 
 ## Structure
 
-- `src/app`: server route components, layout and global monochrome tokens.
-- `src/components/layout`: responsive application shell.
-- `src/components/ui`: button and badge primitives.
-- `src/features/products`: domain types, repository, query logic, interactions and tests.
-- `src/config`: product name and navigation labels.
-- `public/samples`: bundled original SVG texture illustrations, created for this demo.
+`src/app/api` contains local product and image routes. `src/features/products` contains the SQLite repository, validation, query logic, editor, bulk tools, media views, CSV export and tests. `src/components` holds the shared shell and accessible native modal. `public/samples` contains sample textures.
 
-## Data and media
+## Validation
 
-`listProducts()` in the sample repository is the server-side data boundary. Replace its implementation with a backend query while preserving typed products or explicitly adapting backend records. For larger libraries, move filtering and pagination into the repository/server and retain URL query semantics.
+Automated checks cover persistence, unique codes, revision conflicts, atomic bulk edits, archive/restore, duplication, validation, image signatures, CSV protection and filtering. Tests use a separate temporary database.
 
-Products represent design identity. Variants hold dimensions in millimetres, surface, thickness and body. Tile faces are distinct from other media roles. Preview URLs and original asset URLs are separate: original-resolution URLs are null because none were supplied.
-
-The reference ZIP contains screenshots, not reusable product photography. Demo textures are labelled illustrations and repeat across a design's faces; they are not photographs or production assets. Room previews show an honest “None” state. No reference logos, personal information or proprietary artwork is copied.
-
-## Limits and next milestone
-
-No authentication, database, uploads, product editing, client management, permission enforcement, billing, analytics, PDF service or showroom animations. Data is illustrative and changes are not saved. Counts describe the sample library only. No deployment is configured or performed.
-
-Next milestone: real product creation/editing and durable storage, with proper media ingestion. Keep future PDF rendering in a separate background service rather than ordinary web requests.
-
-## Dependency audit
-
-The initial audit reports a high-severity transitive `braces` issue through the development-only Next.js ESLint tooling (five affected package entries). The registry offers no compatible patch; its suggested downgrade to Next.js 14 tooling is intentionally not applied. Recheck before upgrading tooling. No runtime advisory was reported in this audit.
+The initial dependency audit reported a high-severity transitive `braces` issue through development-only Next.js ESLint tooling. No compatible patch was available at that audit; recheck when upgrading tooling. No runtime advisory was reported then.

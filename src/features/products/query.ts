@@ -13,9 +13,7 @@ export interface ProductQuery {
   privacy: string;
   preview: string;
   sort: string;
-  page: number;
 }
-export const PAGE_SIZE = 8;
 export function readQuery(params: URLSearchParams): ProductQuery {
   return {
     q: params.get("q") || "",
@@ -31,7 +29,6 @@ export function readQuery(params: URLSearchParams): ProductQuery {
     privacy: params.get("privacy") || "",
     preview: params.get("preview") || "",
     sort: params.get("sort") === "desc" ? "desc" : "asc",
-    page: Math.max(1, Math.floor(Number(params.get("page")) || 1)),
   };
 }
 export function queryProducts(products: Product[], query: ProductQuery) {
@@ -56,14 +53,7 @@ export function queryProducts(products: Product[], query: ProductQuery) {
     .sort(
       (a, b) => a.name.localeCompare(b.name) * (query.sort === "desc" ? -1 : 1),
     );
-  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const page = Math.min(query.page, pages);
-  return {
-    filtered,
-    pages,
-    page,
-    visible: filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-  };
+  return { filtered, visible: filtered };
 }
 
 export function variantMatches(v: TechnicalVariant, query: ProductQuery) {

@@ -6,7 +6,6 @@ import {
   Layers,
   BookOpen,
   History,
-  ArrowUpRight,
   PanelLeftClose,
   Menu,
 } from "lucide-react";
@@ -29,13 +28,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <small>THE MATERIAL WORKSPACE</small>
           </span>
         </div>
-        <div className="workspace">
-          <span className="workspace-icon">TC</span>
-          <div>
-            {app.workspace}
-            <small>Local development</small>
-          </div>
-        </div>
         <div className="nav-label">WORKSPACE</div>
         <nav>
           {navigation.map((n) => {
@@ -54,23 +46,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
-        <div className="sidebar-bottom">
-          <div className="foundation">
-            <span>PRODUCT LIBRARY · 02</span>
-            <p>
-              A considered start.
-              <br />
-              Built for your collections.
-            </p>
-            <div className="progress">
-              <i />
-            </div>
-            <small>Product management · Milestone 02</small>
-          </div>
-          <div className="demo-dot">
-            Local workspace <ArrowUpRight size={14} />
-          </div>
-        </div>
       </aside>
       <div className="main-shell">
         <header className="topbar">
@@ -88,14 +63,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {navigation.find((n) => n.href === path)?.label || "Products"}
             </strong>
           </span>
-          <span className="demo-label">
-            LOCAL STORAGE <span>·</span> LOCAL PREVIEW
-          </span>
+
         </header>
         <main id="main">{children}</main>
-        <footer>
-          Tile Catalogue <span>Product library · Saved locally</span>
-        </footer>
+
       </div>
     </div>
   );

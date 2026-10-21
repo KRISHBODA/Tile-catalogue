@@ -14,7 +14,7 @@ Checks: `npm run typecheck`, `npm run lint`, `npm test`.
 - Edit descriptions, tags, colour names, collections, status, and PDF/private preferences.
 - Add multiple size, thickness, surface and body variants.
 - Upload PNG, JPEG and WebP files up to 10 MB each as tile faces, room previews or closeups. Select a cover face, edit image descriptions, detach images and download originals.
-- Search, sort, paginate and combine filters, including advanced variant and media filters. Variant criteria must match the same variant.
+- Search, sort and combine filters; all matching designs appear on one page, including advanced variant and media filters. Variant criteria must match the same variant.
 - Configure visible table columns, saved in this browser.
 - Select visible rows and bulk change status or PDF/private preferences. Archive is reversible through status editing. Bulk changes are atomic.
 - Export selected products or all filtered results to CSV, with one row per variant and spreadsheet formula protection.

@@ -59,7 +59,7 @@ export function ProductTable({
               <input
                 ref={all}
                 type="checkbox"
-                aria-label="Select all products on this page"
+                aria-label="Select all matching products"
                 checked={
                   products.length > 0 && selected.length === products.length
                 }

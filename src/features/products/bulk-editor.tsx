@@ -40,7 +40,7 @@ export function BulkEditor({
         <div className="modal-body">
           <p>
             Apply these changes to{" "}
-            <strong>{products.length} selected products</strong> on this page.
+            <strong>{products.length} selected products</strong> matching the current filters.
           </p>
           <ul className="bulk-names">
             {products.map((p) => (

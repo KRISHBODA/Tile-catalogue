@@ -4,20 +4,16 @@ import { usePathname, useSearchParams } from "next/navigation";
 import {
   Search,
   SlidersHorizontal,
-  ChevronLeft,
-  ChevronRight,
   Check,
-  Info,
   Plus,
   Columns3,
   Download,
   Pencil,
-  RefreshCw,
   X,
 } from "lucide-react";
 import { Button, Badge } from "@/components/ui/primitives";
 import type { Product, ProductDraft } from "./types";
-import { PAGE_SIZE, readQuery, queryProducts } from "./query";
+import { readQuery, queryProducts } from "./query";
 import { ProductTable } from "./product-table";
 import { ProductEditor } from "./product-editor";
 import { ProductDetails } from "./product-details";
@@ -41,7 +37,7 @@ export function ProductManager({
   const pathname = usePathname(),
     params = useSearchParams();
   const query = readQuery(new URLSearchParams(params.toString()));
-  const { filtered, pages, page, visible } = queryProducts(products, query);
+  const { filtered, visible } = queryProducts(products, query);
   const [selection, setSelection] = useState<{ view: string; ids: string[] }>({
     view: "",
     ids: [],
@@ -55,7 +51,7 @@ export function ProductManager({
     const next = new URLSearchParams(params.toString());
     if (value) next.set(key, value);
     else next.delete(key);
-    if (key !== "page") next.delete("page");
+    next.delete("page");
     window.history[key === "q" ? "replaceState" : "pushState"](
       null,
       "",
@@ -123,22 +119,6 @@ export function ProductManager({
     setEditor(undefined);
     setNotice(`${saved?.name || "Product"} saved locally.`);
   }
-  async function refresh() {
-    setBusy(true);
-    setError("");
-    try {
-      const response = await fetch("/api/products", { cache: "no-store" });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Refresh failed.");
-      setProducts(result.products);
-      setSelection({ view, ids: [] });
-      setNotice("Library refreshed.");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Refresh failed.");
-    } finally {
-      setBusy(false);
-    }
-  }
   async function duplicate(product: Product) {
     try {
       const copy = await mutate("duplicate", {
@@ -154,61 +134,6 @@ export function ProductManager({
   }
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">YOUR MATERIAL LIBRARY</span>
-          <h1>
-            Product Manager<span className="count">{products.length}</span>
-          </h1>
-          <p>A considered collection. Every detail, in one place.</p>
-        </div>
-        <div className="heading-actions">
-          <Button disabled={busy} onClick={refresh}>
-            <RefreshCw size={14} /> Refresh
-          </Button>
-          <Button className="primary" onClick={() => edit(null)}>
-            <Plus size={15} /> Add product
-          </Button>
-        </div>
-      </div>
-      <div className="summary-grid">
-        <div>
-          <span>Total designs</span>
-          <strong>
-            {products.length.toString().padStart(2, "0")}
-            <small>Across your library</small>
-          </strong>
-        </div>
-        <div>
-          <span>Active products</span>
-          <strong>
-            {products
-              .filter((p) => p.status === "Active")
-              .length.toString()
-              .padStart(2, "0")}
-            <small>Available designs</small>
-          </strong>
-        </div>
-        <div>
-          <span>Collections</span>
-          <strong>
-            {new Set(products.map((p) => p.collection)).size
-              .toString()
-              .padStart(2, "0")}
-            <small>Materials & finishes</small>
-          </strong>
-        </div>
-        <div className="summary-note">
-          <Info size={17} />
-          <p>
-            Your library, saved locally.
-            <small>
-              Includes editable sample designs. New products and uploads are
-              saved on this computer.
-            </small>
-          </p>
-        </div>
-      </div>
       {(notice || error) && (
         <div
           className={`library-notice ${error ? "error" : ""}`}
@@ -229,10 +154,13 @@ export function ProductManager({
       <section className="library" aria-label="Product library">
         <div className="library-heading">
           <div>
-            <h2>All products</h2>
+            <h1>All products</h1>
             <span>Organise. Inspect. Find your next selection.</span>
           </div>
           <div className="library-tools">
+            <Button className="primary" disabled={busy} onClick={() => edit(null)}>
+              <Plus size={15} /> Add product
+            </Button>
             <Badge>Local library</Badge>
             <Button onClick={() => setColumnPicker(true)}>
               <Columns3 size={14} /> Columns
@@ -424,7 +352,7 @@ export function ProductManager({
                 </button>
               </>
             ) : (
-              <span className="muted">Select products on this page</span>
+              <span className="muted">Select matching products</span>
             )}
           </span>
         </div>
@@ -442,54 +370,7 @@ export function ProductManager({
           onEdit={edit}
           onReset={() => window.history.pushState(null, "", pathname)}
         />
-        <div className="pagination">
-          <span>
-            {filtered.length
-              ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)}`
-              : "0"}{" "}
-            of {filtered.length} designs
-            <span className="page-size"> · {PAGE_SIZE} per page</span>
-          </span>
-          <div>
-            <Button
-              className="icon-button"
-              aria-label="Previous page"
-              disabled={page === 1}
-              onClick={() => update("page", String(page - 1))}
-            >
-              <ChevronLeft size={16} />
-            </Button>
-            {Array.from({ length: pages }, (_, i) => (
-              <Button
-                key={i}
-                className={
-                  page === i + 1 ? "page-number primary" : "page-number"
-                }
-                aria-label={`Page ${i + 1}`}
-                aria-current={page === i + 1 ? "page" : undefined}
-                onClick={() => update("page", String(i + 1))}
-              >
-                {i + 1}
-              </Button>
-            ))}
-            <Button
-              className="icon-button"
-              aria-label="Next page"
-              disabled={page === pages}
-              onClick={() => update("page", String(page + 1))}
-            >
-              <ChevronRight size={16} />
-            </Button>
-          </div>
-        </div>
       </section>
-      <div className="below-table">
-        <Info size={14} />
-        <span>
-          Saved locally. Selection is page-specific and clears when you search,
-          filter, sort or change pages.
-        </span>
-      </div>
       {detail && (
         <ProductDetails
           product={detail}

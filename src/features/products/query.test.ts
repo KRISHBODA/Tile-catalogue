@@ -26,11 +26,11 @@ test("filters combine and variant filters match the same variant", () => {
   );
   assert.equal(run("size=1200x2400&surface=Matt").filtered.length, 0);
 });
-test("pagination clamps and sort reverses", () => {
-  assert.equal(run("").visible.length, 8);
-  assert.equal(run("page=2").visible.length, 8);
-  assert.equal(run("page=999").page, 3);
-  assert.equal(run("page=-1").page, 1);
+test("all matching designs are visible and legacy page parameters do not limit results", () => {
+  assert.equal(run("").visible.length, products.length);
+  assert.deepEqual(run("page=2").visible, run("").visible);
+  assert.deepEqual(run("page=999").visible, run("").visible);
+  assert.deepEqual(run("collection=Marble").visible, run("collection=Marble").filtered);
   assert.deepEqual(
     run("sort=desc").filtered.map((p) => p.id),
     run("")
@@ -41,7 +41,6 @@ test("pagination clamps and sort reverses", () => {
 test("empty results are valid", () => {
   const result = run("q=not-a-product");
   assert.equal(result.visible.length, 0);
-  assert.equal(result.pages, 1);
 });
 
 test("advanced filters combine metadata and same-variant specifications", () => {

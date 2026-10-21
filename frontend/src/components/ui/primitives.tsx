@@ -1,10 +1,3 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
-export function Button({
-  className = "",
-  ...props
-}: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button className={`button ${className}`} {...props} />;
-}
-export function Badge({ children }: { children: ReactNode }) {
-  return <span className="badge">{children}</span>;
-}
+// Re-export common primitives for backward compatibility
+export { Button, Badge } from "../common";
+export type { ButtonProps, ButtonVariant, ButtonSize, BadgeProps, BadgeVariant } from "../common";

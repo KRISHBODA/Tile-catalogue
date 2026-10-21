@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Shell } from "@/components/layout/shell";
+import { TranslationProvider } from "@/context/TranslationContext";
+
 export const metadata: Metadata = {
   title: "Tile Catalogue — Product workspace",
-  description: "A local tile product management foundation.",
+  description: "A production-grade tile product management foundation.",
 };
+
 export default function RootLayout({
   children,
 }: {
@@ -13,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Shell>{children}</Shell>
+        <TranslationProvider defaultLocale="en">
+          <Shell>{children}</Shell>
+        </TranslationProvider>
       </body>
     </html>
   );

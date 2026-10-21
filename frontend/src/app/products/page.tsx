@@ -1,12 +1,12 @@
 import { Suspense } from "react";
-import { listProducts } from "@/features/products/repository";
-import { ProductManager } from "@/features/products/product-manager";
+import { ProductManager, sampleProducts } from "@/features/products";
+
 export const dynamic = "force-dynamic";
-export default async function Products() {
-  const products = await listProducts();
+
+export default function Products() {
   return (
     <Suspense fallback={<p>Loading product library…</p>}>
-      <ProductManager products={products} />
+      <ProductManager initialProducts={sampleProducts} />
     </Suspense>
   );
 }

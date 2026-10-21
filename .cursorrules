@@ -1,0 +1,5 @@
+# Cursor AI Rules
+# Always read AGENTS.md before writing or editing code in this repository.
+# Strict rules apply for backend layer separation, frontend Next.js architecture,
+# CSS modules per component, translation context usage, and no test files.
+@AGENTS.md

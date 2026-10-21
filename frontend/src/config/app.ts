@@ -1,6 +1,12 @@
-export const app = { name: "Tile Catalogue", workspace: "Studio workspace" };
+import { APP_CONFIG, APP_ROUTES } from "@/constants";
+
+export const app = {
+  name: APP_CONFIG.NAME,
+  workspace: APP_CONFIG.WORKSPACE,
+};
+
 export const navigation = [
-  { href: "/products", label: "Product Manager", icon: "products" },
-  { href: "/catalogues/builder", label: "Catalogue Builder", icon: "builder" },
-  { href: "/catalogues/history", label: "Catalogue History", icon: "history" },
+  { href: APP_ROUTES.PRODUCTS, label: "Product Manager", icon: "products" },
+  { href: APP_ROUTES.CATALOGUES.BUILDER, label: "Catalogue Builder", icon: "builder" },
+  { href: APP_ROUTES.CATALOGUES.HISTORY, label: "Catalogue History", icon: "history" },
 ] as const;

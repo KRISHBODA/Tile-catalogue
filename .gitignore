@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Next.js & Build outputs
+.next/
+dist/
+out/
+build/
+*.tsbuildinfo
+
+# OS & Environment
+.DS_Store
+Thumbs.db
+.env
+.env*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test files & coverage
+*.test.ts
+*.test.tsx
+*.test.js
+*.test.jsx
+*.spec.ts
+*.spec.tsx
+*.spec.js
+*.spec.jsx
+__tests__/
+test/
+tests/
+coverage/
+
+# Data & SQLite
+/data/
+*.sqlite
+*.sqlite3
+*.db

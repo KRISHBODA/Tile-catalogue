@@ -1,0 +1,44 @@
+.card {
+  background-color: var(--paper, #ffffff);
+  border: 1px solid var(--line, #e8e8e8);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.15s ease-in-out;
+}
+
+.interactive {
+  cursor: pointer;
+}
+
+.interactive:hover {
+  border-color: var(--ink, #171717);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--line, #e8e8e8);
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink, #171717);
+}
+
+.subtitle {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.8125rem;
+  color: var(--muted, #737373);
+}
+
+.body {
+  padding: 1.5rem;
+}
+
+.footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--line, #e8e8e8);
+  background-color: var(--soft, #f7f7f7);
+}

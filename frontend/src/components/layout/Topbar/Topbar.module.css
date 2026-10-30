@@ -6,7 +6,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-6, 24px);
+  padding: 0 40px;
   background: color-mix(in srgb, var(--color-surface, #FDFCFA) 85%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -20,9 +20,9 @@
   gap: var(--space-4, 16px);
 }
 
-/* 3-Horizontal Lines Toggle Button */
+/* Mobile-only toggle button (Desktop toggle is directly in left sidebar header) */
 .hamburgerBtn {
-  display: inline-flex;
+  display: none;
   align-items: center;
   justify-content: center;
   width: 36px;
@@ -42,11 +42,6 @@
   border-color: var(--color-border-strong, #D0CCC1);
   color: var(--color-accent-hover, #8E7145);
   box-shadow: var(--shadow-card-hover, 0 6px 18px rgb(37 38 33 / 6%));
-  transform: translateY(-1px);
-}
-
-.hamburgerBtn:active {
-  transform: translateY(0);
 }
 
 .hamburgerBtn svg {
@@ -152,11 +147,17 @@
   color: var(--color-text, #252621);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .topbar {
-    padding: 0 var(--space-4, 16px);
+    padding: 0 16px;
   }
 
+  .hamburgerBtn {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 768px) {
   .dbStatusPill {
     display: none;
   }

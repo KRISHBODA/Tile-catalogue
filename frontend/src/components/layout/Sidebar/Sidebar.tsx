@@ -9,6 +9,7 @@ import {
   History,
   Layers,
   LogOut,
+  Menu,
 } from "lucide-react";
 import { useAuth, useTranslation } from "@/context";
 import styles from "./Sidebar.module.css";
@@ -58,7 +59,7 @@ export function Sidebar({
         .slice(0, 2)
         .join("")
         .toUpperCase()
-    : "WA";
+    : "SA";
 
   return (
     <>
@@ -69,20 +70,49 @@ export function Sidebar({
           isMobileOpen ? styles.mobileOpen : ""
         }`}
       >
-        {/* Header / Brand matching ChatGPT screenshot */}
-        <div className={styles.header}>
-          <Link href="/products" className={styles.brand} onClick={onCloseMobile}>
-            <div className={styles.logoIcon}>
-              <Layers size={28} />
-            </div>
+        {/* Header / Brand with 3-Horizontal Lines Menu Button */}
+        <div
+          className={`${styles.header} ${isCollapsed ? styles.headerCollapsed : ""}`}
+        >
+          {isCollapsed ? (
+            <button
+              type="button"
+              className={styles.hamburgerBtnRail}
+              onClick={onToggleCollapse}
+              aria-label="Expand sidebar"
+              title="Expand sidebar"
+            >
+              <Menu size={20} />
+            </button>
+          ) : (
+            <>
+              <Link
+                href="/products"
+                className={styles.brand}
+                onClick={onCloseMobile}
+              >
+                <div className={styles.logoIcon}>
+                  <Layers size={26} />
+                </div>
 
-            {!isCollapsed && (
-              <div className={styles.brandText}>
-                <span className={styles.brandName}>Tile Catalogue</span>
-                <span className={styles.brandSub}>THE MATERIAL WORKSPACE</span>
-              </div>
-            )}
-          </Link>
+                <div className={styles.brandText}>
+                  <span className={styles.brandName}>Tile Catalogue</span>
+                  <span className={styles.brandSub}>THE MATERIAL WORKSPACE</span>
+                </div>
+              </Link>
+
+              {/* 3 Horizontal Lines Toggle Button inside Left Sidebar Header */}
+              <button
+                type="button"
+                className={styles.hamburgerBtn}
+                onClick={onToggleCollapse}
+                aria-label="Collapse sidebar"
+                title="Collapse sidebar"
+              >
+                <Menu size={18} />
+              </button>
+            </>
+          )}
         </div>
 
         {/* Navigation Section */}
@@ -104,7 +134,7 @@ export function Sidebar({
                 title={isCollapsed ? item.label : undefined}
               >
                 <span className={styles.navIcon}>
-                  <Icon size={19} />
+                  <Icon size={20} />
                 </span>
 
                 {!isCollapsed && (
@@ -130,7 +160,7 @@ export function Sidebar({
             {!isCollapsed && (
               <div className={styles.userInfo}>
                 <span className={styles.userName}>
-                  {user?.name || "Workspace Admin"}
+                  {user?.name || "Super Admin"}
                 </span>
                 <span className={styles.userRole}>
                   {user?.role?.name || "SUPER ADMIN"}
@@ -139,7 +169,7 @@ export function Sidebar({
             )}
           </div>
 
-          {/* Explicit Left-Bottom Sign Out Button (as requested by user) */}
+          {/* Left-Bottom Sign Out Button */}
           <button
             type="button"
             className={styles.signOutButton}

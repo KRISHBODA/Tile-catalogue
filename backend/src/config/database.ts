@@ -1,10 +1,10 @@
+import { PrismaClient } from '@prisma/client';
+
 /**
  * Database Connection & Client Configuration
  *
- * This layer is responsible for establishing, managing, and closing
- * connections to the persistent database (e.g., PostgreSQL, MongoDB, Prisma, etc.).
- *
- * Repositories will consume this client. Services will NEVER touch this file or the client.
+ * This layer manages the Prisma ORM singleton client connection.
+ * Repositories consume this client. Services will NEVER touch this file or Prisma directly.
  */
 
 export interface DatabaseClient {
@@ -13,16 +13,27 @@ export interface DatabaseClient {
   disconnect: () => Promise<void>;
 }
 
+export const prisma = new PrismaClient({
+  log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+});
+
 class AppDatabase implements DatabaseClient {
   private connected: boolean = false;
 
   public async connect(): Promise<void> {
-    // In production, instantiate your ORM/DB pool here (e.g., PrismaClient, pg Pool, mongoose)
-    this.connected = true;
-    console.log('[Database] Database connection established successfully.');
+    try {
+      await prisma.$connect();
+      this.connected = true;
+      console.log('[Database] Cloud PostgreSQL connected successfully via Prisma.');
+    } catch (error) {
+      this.connected = false;
+      console.error('[Database] Failed to connect to database:', error);
+      throw error;
+    }
   }
 
   public async disconnect(): Promise<void> {
+    await prisma.$disconnect();
     this.connected = false;
     console.log('[Database] Database connection closed.');
   }

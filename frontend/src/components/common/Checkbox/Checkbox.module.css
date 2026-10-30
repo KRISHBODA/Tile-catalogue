@@ -1,0 +1,60 @@
+.container {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-family: inherit;
+  cursor: pointer;
+  user-select: none;
+}
+
+.container.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.box {
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: var(--radius-sm, 4px);
+  border: 1.5px solid var(--color-border-strong, #D0CCC1);
+  background-color: var(--color-surface, #FDFCFA);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast, 150ms ease);
+  color: #ffffff;
+  flex-shrink: 0;
+  outline: none;
+}
+
+.container:hover:not(.disabled) .box {
+  border-color: var(--color-text-secondary, #74736B);
+}
+
+.box.checked,
+.box.indeterminate {
+  background-color: var(--color-primary, #292A26);
+  border-color: var(--color-primary, #292A26);
+}
+
+.box:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.label {
+  font-size: var(--text-base, 14px);
+  font-weight: var(--font-medium, 500);
+  color: var(--color-text, #252621);
+}
+
+.description {
+  font-size: var(--text-xs, 12px);
+  color: var(--color-text-secondary, #74736B);
+  margin-top: 0.125rem;
+}
+
+.textWrapper {
+  display: flex;
+  flex-direction: column;
+}

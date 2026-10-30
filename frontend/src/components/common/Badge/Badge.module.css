@@ -1,36 +1,93 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.125rem 0.5rem;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  font-weight: 500;
+  gap: 0.375rem;
+  font-family: inherit;
+  font-weight: var(--font-medium, 500);
+  line-height: 1;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid transparent;
+  user-select: none;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.sm {
+  padding: 0.2rem 0.5rem;
+  font-size: var(--text-xs, 12px);
+}
+
+.md {
+  padding: 0.25rem 0.625rem;
+  font-size: var(--text-sm, 13px);
+}
+
+/* Dot indicator */
+.dot {
+  width: 0.4375rem;
+  height: 0.4375rem;
   border-radius: 9999px;
-  background-color: var(--soft, #f7f7f7);
-  color: var(--muted, #737373);
-  border: 1px solid var(--line, #e8e8e8);
+  background-color: currentColor;
+  flex-shrink: 0;
+}
+
+/* Variants */
+.default {
+  background-color: var(--color-surface-muted, #EDEAE3);
+  color: var(--color-text-secondary, #74736B);
+  border-color: var(--color-border, #E3E0D8);
 }
 
 .success {
-  background-color: #ecfdf5;
-  color: #065f46;
-  border-color: #a7f3d0;
+  background-color: var(--color-success-bg, #E8F2EB);
+  color: var(--color-success, #347451);
+  border-color: rgba(52, 116, 81, 0.2);
+}
+.success .dot {
+  background-color: var(--color-success, #347451);
 }
 
 .warning {
-  background-color: #fffbeb;
-  color: #92400e;
-  border-color: #fde68a;
+  background-color: var(--color-warning-bg, #F7EEDC);
+  color: var(--color-warning, #986A28);
+  border-color: rgba(152, 106, 40, 0.2);
+}
+.warning .dot {
+  background-color: var(--color-warning, #986A28);
 }
 
 .danger {
-  background-color: #fef2f2;
-  color: #991b1b;
-  border-color: #fecaca;
+  background-color: var(--color-danger-bg, #F8E9E6);
+  color: var(--color-danger, #B7473F);
+  border-color: rgba(183, 71, 63, 0.2);
+}
+.danger .dot {
+  background-color: var(--color-danger, #B7473F);
+}
+
+.info {
+  background-color: var(--color-info-bg, #E8EFF6);
+  color: var(--color-info, #426F98);
+  border-color: rgba(66, 111, 152, 0.2);
+}
+.info .dot {
+  background-color: var(--color-info, #426F98);
+}
+
+.purple {
+  background-color: var(--color-accent-subtle, #F0E8D9);
+  color: var(--color-accent-hover, #8E7145);
+  border-color: rgba(168, 137, 88, 0.3);
+}
+.purple .dot {
+  background-color: var(--color-accent, #A88958);
 }
 
 .outline {
   background-color: transparent;
-  color: var(--ink, #171717);
-  border-color: var(--line, #e8e8e8);
+  color: var(--color-text, #252621);
+  border-color: var(--color-border-strong, #D0CCC1);
+}
+.outline .dot {
+  background-color: var(--color-text-secondary, #74736B);
 }

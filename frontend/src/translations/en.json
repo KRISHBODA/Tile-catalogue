@@ -20,7 +20,17 @@
     "close": "Close",
     "columns": "Columns",
     "export": "Export",
-    "status": "Status"
+    "status": "Status",
+    "confirm": "Confirm",
+    "confirmAction": "Please confirm this action.",
+    "page": "Page",
+    "of": "of",
+    "rowsPerPage": "Rows per page",
+    "showing": "Showing",
+    "to": "to",
+    "results": "results",
+    "next": "Next",
+    "previous": "Previous"
   },
   "nav": {
     "productManager": "Product Manager",
@@ -73,5 +83,22 @@
     "network": "Unable to connect to the backend server. Please verify backend is running on port 5000.",
     "notFound": "The requested resource was not found.",
     "saveFailed": "Could not save changes. Please try again."
+  },
+  "auth": {
+    "badgeLabel": "Studio Command Center",
+    "signInTitle": "Super Admin Portal",
+    "signInSubtitle": "Architectural studio console. Authenticate to access catalogue assets.",
+    "emailLabel": "Administrator Email",
+    "emailPlaceholder": "admin@tilecatalog.com",
+    "passwordLabel": "Master Key / Password",
+    "passwordPlaceholder": "••••••••••••",
+    "rememberMe": "Keep console session active",
+    "signInButton": "Authenticate into Studio",
+    "authenticating": "Verifying credentials…",
+    "securityFooter": "256-bit TLS encrypted session • Strictly for authorized administrators",
+    "demoHint": "Quick Fill Super Admin",
+    "loginSuccess": "Access granted. Launching workspace…",
+    "logout": "Sign Out",
+    "superAdminBadge": "Super Admin"
   }
 }

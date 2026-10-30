@@ -1,31 +1,34 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(2px);
+  background-color: var(--color-overlay, rgb(34 35 31 / 42%));
+  backdrop-filter: var(--blur-overlay, blur(16px));
+  -webkit-backdrop-filter: var(--blur-overlay, blur(16px));
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 1.25rem;
   z-index: 1000;
-  animation: fadeIn 0.15s ease-out;
+  animation: fadeIn var(--transition-fast, 150ms ease);
 }
 
 .card {
-  background-color: var(--paper, #ffffff);
-  border-radius: 8px;
-  border: 1px solid var(--line, #e8e8e8);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  position: relative;
+  background-color: var(--color-surface-raised, #FFFFFF);
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid var(--color-border, #E3E0D8);
+  box-shadow: var(--shadow-dialog);
   width: 100%;
-  max-height: 90vh;
+  max-height: calc(100vh - 2.5rem);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: slideUp 0.15s ease-out;
+  animation: scaleIn var(--transition-normal, 200ms ease);
 }
 
+/* Width Sizes */
 .sm {
-  max-width: 28rem;
+  max-width: 26rem;
 }
 
 .md {
@@ -44,39 +47,51 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--line, #e8e8e8);
+  gap: 1rem;
+  padding: var(--space-5, 20px) var(--space-6, 24px);
+  border-bottom: 1px solid var(--color-border, #E3E0D8);
+  background-color: var(--color-surface, #FDFCFA);
+}
+
+.headerContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .title {
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--ink, #171717);
+  font-size: var(--text-lg, 16px);
+  font-weight: var(--font-semibold, 600);
+  color: var(--color-text, #252621);
+  letter-spacing: -0.015em;
+  line-height: 1.35;
 }
 
 .description {
-  margin: 0.25rem 0 0 0;
-  font-size: 0.875rem;
-  color: var(--muted, #737373);
+  margin: 0;
+  font-size: var(--text-sm, 13px);
+  color: var(--color-text-secondary, #74736B);
+  line-height: 1.4;
 }
 
 .closeButton {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: var(--muted, #737373);
-  padding: 0.25rem;
-  border-radius: 4px;
+  color: var(--color-text-muted, #929087);
+  padding: 0.375rem;
+  border-radius: var(--radius-sm, 6px);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  transition: all var(--transition-fast, 150ms ease);
+  flex-shrink: 0;
 }
 
 .closeButton:hover:not(:disabled) {
-  color: var(--ink, #171717);
-  background-color: var(--soft, #f7f7f7);
+  color: var(--color-text, #252621);
+  background-color: var(--color-surface-hover, #F5F3EE);
 }
 
 .closeButton:disabled {
@@ -85,9 +100,10 @@
 }
 
 .body {
-  padding: 1.5rem;
+  padding: var(--space-6, 24px);
   overflow-y: auto;
   flex: 1;
+  color: var(--color-text, #252621);
 }
 
 .footer {
@@ -95,9 +111,35 @@
   align-items: center;
   justify-content: flex-end;
   gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--line, #e8e8e8);
-  background-color: var(--soft, #f7f7f7);
+  padding: var(--space-4, 16px) var(--space-6, 24px);
+  border-top: 1px solid var(--color-border, #E3E0D8);
+  background-color: var(--color-surface-hover, #F5F3EE);
+}
+
+/* Confirm Dialog Variant */
+.confirmIconWrapper {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.confirmIconWrapper.danger {
+  background-color: var(--color-danger-bg, #F8E9E6);
+  color: var(--color-danger, #B7473F);
+}
+
+.confirmIconWrapper.warning {
+  background-color: var(--color-warning-bg, #F7EEDC);
+  color: var(--color-warning, #986A28);
+}
+
+.confirmIconWrapper.info {
+  background-color: var(--color-info-bg, #E8EFF6);
+  color: var(--color-info, #426F98);
 }
 
 @keyframes fadeIn {
@@ -109,12 +151,13 @@
   }
 }
 
-@keyframes slideUp {
+@keyframes scaleIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: scale(0.97) translateY(4px);
   }
   to {
     opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }

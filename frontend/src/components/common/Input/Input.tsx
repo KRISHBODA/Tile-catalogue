@@ -1,4 +1,5 @@
 import React, { InputHTMLAttributes, forwardRef, ReactNode } from "react";
+import { X, AlertCircle } from "lucide-react";
 import styles from "./Input.module.css";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -7,17 +8,37 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   helperText?: string;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
+  clearable?: boolean;
+  onClear?: () => void;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, leftIcon, rightIcon, className = "", id, ...props }, ref) => {
+  (
+    {
+      label,
+      error,
+      helperText,
+      leftIcon,
+      rightIcon,
+      clearable = false,
+      onClear,
+      className = "",
+      id,
+      required,
+      value,
+      ...props
+    },
+    ref
+  ) => {
     const inputId = id || props.name;
+
+    const showClear = clearable && Boolean(value) && onClear;
 
     const inputClasses = [
       styles.input,
       error ? styles.hasError : "",
       leftIcon ? styles.hasLeftIcon : "",
-      rightIcon ? styles.hasRightIcon : "",
+      rightIcon || showClear ? styles.hasRightIcon : "",
       className,
     ]
       .filter(Boolean)
@@ -26,17 +47,55 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={`input-group ${styles.group}`}>
         {label && (
-          <label htmlFor={inputId} className={`input-label ${styles.label}`}>
-            {label}
-          </label>
+          <div className={styles.labelWrapper}>
+            <label htmlFor={inputId} className={`input-label ${styles.label}`}>
+              {label}
+              {required && <span className={styles.required}>*</span>}
+            </label>
+          </div>
         )}
         <div className={`input-wrapper ${styles.wrapper}`}>
-          {leftIcon && <span className={`${styles.icon} ${styles.left}`}>{leftIcon}</span>}
-          <input id={inputId} ref={ref} className={inputClasses} {...props} />
-          {rightIcon && <span className={`${styles.icon} ${styles.right}`}>{rightIcon}</span>}
+          {leftIcon && (
+            <span className={`${styles.icon} ${styles.left}`} aria-hidden="true">
+              {leftIcon}
+            </span>
+          )}
+          <input
+            id={inputId}
+            ref={ref}
+            value={value}
+            required={required}
+            className={inputClasses}
+            {...props}
+          />
+          {showClear ? (
+            <span className={`${styles.icon} ${styles.right}`}>
+              <button
+                type="button"
+                className={styles.clearButton}
+                onClick={onClear}
+                aria-label="Clear input"
+              >
+                <X size={15} />
+              </button>
+            </span>
+          ) : (
+            rightIcon && (
+              <span className={`${styles.icon} ${styles.right}`} aria-hidden="true">
+                {rightIcon}
+              </span>
+            )
+          )}
         </div>
-        {error && <p className={`input-error ${styles.errorText}`}>{error}</p>}
-        {!error && helperText && <p className={`input-helper ${styles.helperText}`}>{helperText}</p>}
+        {error && (
+          <p className={`input-error ${styles.errorText}`} role="alert">
+            <AlertCircle size={13} aria-hidden="true" />
+            <span>{error}</span>
+          </p>
+        )}
+        {!error && helperText && (
+          <p className={`input-helper ${styles.helperText}`}>{helperText}</p>
+        )}
       </div>
     );
   }

@@ -1,0 +1,19 @@
+import { Router } from 'express';
+import { authController } from '../controllers/auth.controller.js';
+import { authenticate } from '../middlewares/auth.middleware.js';
+
+const router = Router();
+
+/**
+ * Route: POST /api/v1/auth/login
+ * Public login endpoint for admin portal
+ */
+router.post('/login', authController.login);
+
+/**
+ * Route: GET /api/v1/auth/me
+ * Protected endpoint to retrieve authenticated user profile & permissions
+ */
+router.get('/me', authenticate, authController.me);
+
+export default router;

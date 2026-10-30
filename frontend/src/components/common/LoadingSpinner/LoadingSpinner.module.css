@@ -1,25 +1,106 @@
 .container {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--muted, #737373);
+  justify-content: center;
+  gap: 0.625rem;
+  color: var(--color-text-secondary, #74736B);
+  font-family: inherit;
 }
 
 .spinner {
-  animation: spin 0.75s linear infinite;
   display: block;
+  animation: rotate 0.8s linear infinite;
+  transform-origin: center;
+  flex-shrink: 0;
 }
 
+.track {
+  stroke: currentColor;
+  opacity: 0.15;
+}
+
+.indicator {
+  stroke: currentColor;
+  stroke-linecap: round;
+  transition: all var(--transition-fast, 150ms ease);
+}
+
+/* Spinner Colors */
+.primary {
+  color: var(--color-primary, #292A26);
+}
+
+.neutral {
+  color: var(--color-text-secondary, #74736B);
+}
+
+.white {
+  color: #ffffff;
+}
+
+/* Message text */
 .message {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--text-base, 14px);
+  font-weight: var(--font-medium, 500);
+  color: var(--color-text, #252621);
+  letter-spacing: -0.01em;
 }
 
-@keyframes spin {
+/* Full Overlay Loader */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: var(--color-overlay, rgb(34 35 31 / 42%));
+  backdrop-filter: var(--blur-overlay, blur(16px));
+  -webkit-backdrop-filter: var(--blur-overlay, blur(16px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  z-index: 9999;
+  animation: fadeIn var(--transition-fast, 150ms ease);
+}
+
+/* Skeleton Loading Primitive */
+.skeleton {
+  display: block;
+  background-color: var(--color-surface-muted, #EDEAE3);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+  border-radius: var(--radius-sm, 6px);
+}
+
+.skeletonCircle {
+  border-radius: var(--radius-full, 9999px);
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes fadeIn {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
   }
 }

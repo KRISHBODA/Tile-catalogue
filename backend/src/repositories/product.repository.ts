@@ -1,96 +1,60 @@
 import { IProductRepository, Product, ProductFilterParams } from '../types/product.types.js';
 import { PaginatedResult } from '../types/common.types.js';
-import { db } from '../config/database.js';
+import { prisma } from '../config/database.js';
+import { Prisma } from '@prisma/client';
 
 /**
  * REPOSITORY LAYER: ProductRepository
  *
- * Responsibility: ONLY Database / Persistence Operations.
+ * Responsibility: ONLY Database / Persistence Operations via Prisma ORM.
  *
  * Rules:
  * - NO business logic or validation rules here.
- * - Executes direct DB queries (e.g. SQL, ORM, Document DB).
+ * - Executes direct Prisma queries against PostgreSQL.
  * - Implements IProductRepository to ensure a clean contract.
  */
 export class ProductRepository implements IProductRepository {
-  // In-memory persistent store representation (easily replaced with db.query or ORM calls)
-  private products: Product[] = [
-    {
-      id: 'prod-001',
-      name: 'Statuario White Gloss Marble Tile',
-      slug: 'statuario-white-gloss-marble-tile',
-      category: 'Marble',
-      size: '600x1200 mm',
-      finish: 'Glossy',
-      pricePerSqFt: 85,
-      inStock: true,
-      imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c',
-      createdAt: new Date('2026-01-10T10:00:00Z'),
-      updatedAt: new Date('2026-01-10T10:00:00Z'),
-    },
-    {
-      id: 'prod-002',
-      name: 'Rustic Slate Outdoor Paver',
-      slug: 'rustic-slate-outdoor-paver',
-      category: 'Outdoor',
-      size: '600x600 mm',
-      finish: 'Matte',
-      pricePerSqFt: 62,
-      inStock: true,
-      imageUrl: 'https://images.unsplash.com/photo-1595846519845-68e298c2edd8',
-      createdAt: new Date('2026-01-12T11:00:00Z'),
-      updatedAt: new Date('2026-01-12T11:00:00Z'),
-    },
-    {
-      id: 'prod-003',
-      name: 'Travertine Beige Polished Porcelain',
-      slug: 'travertine-beige-polished-porcelain',
-      category: 'Porcelain',
-      size: '800x1600 mm',
-      finish: 'Polished',
-      pricePerSqFt: 110,
-      inStock: false,
-      imageUrl: 'https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf',
-      createdAt: new Date('2026-01-15T09:30:00Z'),
-      updatedAt: new Date('2026-01-15T09:30:00Z'),
-    },
-  ];
-
   public async findAll(filters: ProductFilterParams): Promise<PaginatedResult<Product>> {
-    // In production: const rows = await db.query('SELECT ...') or await prisma.product.findMany(...)
-    let filtered = [...this.products];
+    const where: Prisma.ProductWhereInput = {};
 
     if (filters.category) {
-      const cat = filters.category.toLowerCase();
-      filtered = filtered.filter((p) => p.category.toLowerCase() === cat);
+      where.category = { equals: filters.category, mode: 'insensitive' };
     }
 
     if (filters.finish) {
-      const fin = filters.finish.toLowerCase();
-      filtered = filtered.filter((p) => p.finish.toLowerCase() === fin);
+      where.finish = { equals: filters.finish, mode: 'insensitive' };
     }
 
     if (typeof filters.inStock === 'boolean') {
-      filtered = filtered.filter((p) => p.inStock === filters.inStock);
+      where.inStock = filters.inStock;
     }
 
     if (filters.search) {
-      const query = filters.search.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.category.toLowerCase().includes(query) ||
-          p.finish.toLowerCase().includes(query)
-      );
+      const q = filters.search.trim();
+      where.OR = [
+        { name: { contains: q, mode: 'insensitive' } },
+        { category: { contains: q, mode: 'insensitive' } },
+        { finish: { contains: q, mode: 'insensitive' } },
+      ];
     }
 
-    const total = filtered.length;
-    const startIndex = (filters.page - 1) * filters.pageSize;
-    const items = filtered.slice(startIndex, startIndex + filters.pageSize);
+    const skip = (filters.page - 1) * filters.pageSize;
+    const take = filters.pageSize;
+
+    const [total, items] = await Promise.all([
+      prisma.product.count({ where }),
+      prisma.product.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
     const totalPages = Math.ceil(total / filters.pageSize) || 1;
 
     return {
-      items,
+      items: items.map(this.mapPrismaProduct),
       total,
       page: filters.page,
       pageSize: filters.pageSize,
@@ -101,54 +65,84 @@ export class ProductRepository implements IProductRepository {
   }
 
   public async findById(id: string): Promise<Product | null> {
-    // Direct DB query: e.g., SELECT * FROM products WHERE id = $1
-    const product = this.products.find((p) => p.id === id);
-    return product ? { ...product } : null;
+    const item = await prisma.product.findUnique({
+      where: { id },
+    });
+    return item ? this.mapPrismaProduct(item) : null;
   }
 
   public async findBySlug(slug: string): Promise<Product | null> {
-    // Direct DB query: e.g., SELECT * FROM products WHERE slug = $1
-    const product = this.products.find((p) => p.slug === slug);
-    return product ? { ...product } : null;
+    const item = await prisma.product.findUnique({
+      where: { slug },
+    });
+    return item ? this.mapPrismaProduct(item) : null;
   }
 
   public async create(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
-    // Direct DB insert: e.g., INSERT INTO products (...) VALUES (...)
-    const now = new Date();
-    const newProduct: Product = {
-      ...productData,
-      id: `prod-${Date.now().toString(36)}`,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    this.products.unshift(newProduct);
-    return { ...newProduct };
+    const created = await prisma.product.create({
+      data: {
+        name: productData.name,
+        slug: productData.slug,
+        category: productData.category,
+        size: productData.size,
+        finish: productData.finish,
+        pricePerSqFt: productData.pricePerSqFt,
+        inStock: productData.inStock ?? true,
+        imageUrl: productData.imageUrl ?? null,
+      },
+    });
+    return this.mapPrismaProduct(created);
   }
 
   public async update(id: string, updates: Partial<Product>): Promise<Product | null> {
-    // Direct DB update: e.g., UPDATE products SET ... WHERE id = $1
-    const index = this.products.findIndex((p) => p.id === id);
-    if (index === -1) return null;
-
-    const existing = this.products[index];
-    if (!existing) return null;
-
-    const updated: Product = {
-      ...existing,
-      ...updates,
-      updatedAt: new Date(),
-    };
-
-    this.products[index] = updated;
-    return { ...updated };
+    try {
+      const updated = await prisma.product.update({
+        where: { id },
+        data: {
+          ...(updates.name !== undefined && { name: updates.name }),
+          ...(updates.slug !== undefined && { slug: updates.slug }),
+          ...(updates.category !== undefined && { category: updates.category }),
+          ...(updates.size !== undefined && { size: updates.size }),
+          ...(updates.finish !== undefined && { finish: updates.finish }),
+          ...(updates.pricePerSqFt !== undefined && { pricePerSqFt: updates.pricePerSqFt }),
+          ...(updates.inStock !== undefined && { inStock: updates.inStock }),
+          ...(updates.imageUrl !== undefined && { imageUrl: updates.imageUrl }),
+        },
+      });
+      return this.mapPrismaProduct(updated);
+    } catch {
+      return null;
+    }
   }
 
   public async delete(id: string): Promise<boolean> {
-    // Direct DB delete: e.g., DELETE FROM products WHERE id = $1
-    const initialLength = this.products.length;
-    this.products = this.products.filter((p) => p.id !== id);
-    return this.products.length < initialLength;
+    try {
+      await prisma.product.delete({
+        where: { id },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private mapPrismaProduct(row: {
+    id: string;
+    name: string;
+    slug: string;
+    category: string;
+    size: string;
+    finish: string;
+    pricePerSqFt: number;
+    inStock: boolean;
+    imageUrl: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): Product {
+    return {
+      ...row,
+      imageUrl: row.imageUrl ?? undefined,
+    };
   }
 }
 

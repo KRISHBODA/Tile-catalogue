@@ -1,13 +1,23 @@
-import React, { ButtonHTMLAttributes, forwardRef } from "react";
+import React, { ButtonHTMLAttributes, forwardRef, ReactNode } from "react";
 import styles from "./Button.module.css";
 
-export type ButtonVariant = "primary" | "secondary" | "outline" | "danger" | "ghost" | "clear";
-export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "outline"
+  | "danger"
+  | "ghost"
+  | "subtle"
+  | "clear";
+
+export type ButtonSize = "xs" | "sm" | "md" | "lg" | "icon" | "iconSm";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -18,16 +28,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       size = "md",
       isLoading = false,
       disabled,
+      leftIcon,
+      rightIcon,
       children,
       ...props
     },
     ref
   ) => {
-    // Look up scoped class names from CSS module
-    const variantClass = variant !== "secondary" && styles[variant] ? styles[variant] : "";
-    const sizeClass = size !== "md" && styles[size] ? styles[size] : "";
+    const variantClass = styles[variant] || "";
+    const sizeClass = styles[size] || styles.md;
 
-    // Retain global button class as fallback for existing global CSS while applying scoped styles
     const combinedClasses = `button ${styles.button} ${variantClass} ${sizeClass} ${className}`.trim();
 
     return (
@@ -38,12 +48,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading ? (
-          <span className="flex items-center gap-2">
-            <span className={styles.spinner} />
-            {children}
-          </span>
+          <span className={styles.spinner} aria-hidden="true" />
         ) : (
-          children
+          leftIcon && <span className={styles.iconWrapper}>{leftIcon}</span>
+        )}
+        {children}
+        {!isLoading && rightIcon && (
+          <span className={styles.iconWrapper}>{rightIcon}</span>
         )}
       </button>
     );

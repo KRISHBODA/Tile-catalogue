@@ -39,6 +39,18 @@ export class ConflictError extends AppError {
   }
 }
 
+export class UnauthorizedError extends AppError {
+  constructor(message = 'Unauthorized access') {
+    super(message, HttpStatusCodes.UNAUTHORIZED);
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message = 'Forbidden access') {
+    super(message, HttpStatusCodes.FORBIDDEN);
+  }
+}
+
 export class InternalServerError extends AppError {
   constructor(message = 'Internal server error') {
     super(message, HttpStatusCodes.INTERNAL_SERVER_ERROR, undefined, false);

@@ -1,0 +1,163 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: var(--topbar-height, 64px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6, 24px);
+  background: color-mix(in srgb, var(--color-surface, #FDFCFA) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--color-border, #E3E0D8);
+  transition: all var(--transition-fast, 150ms ease);
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 16px);
+}
+
+/* 3-Horizontal Lines Toggle Button */
+.hamburgerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md, 10px);
+  background-color: var(--color-surface-raised, #FFFFFF);
+  border: 1px solid var(--color-border, #E3E0D8);
+  color: var(--color-text, #252621);
+  cursor: pointer;
+  box-shadow: var(--shadow-card, 0 2px 8px rgb(37 38 33 / 3%));
+  transition: all var(--transition-fast, 150ms ease);
+  flex-shrink: 0;
+}
+
+.hamburgerBtn:hover {
+  background-color: var(--color-surface-hover, #F5F3EE);
+  border-color: var(--color-border-strong, #D0CCC1);
+  color: var(--color-accent-hover, #8E7145);
+  box-shadow: var(--shadow-card-hover, 0 6px 18px rgb(37 38 33 / 6%));
+  transform: translateY(-1px);
+}
+
+.hamburgerBtn:active {
+  transform: translateY(0);
+}
+
+.hamburgerBtn svg {
+  stroke-width: 2.25px;
+}
+
+/* Breadcrumbs matching Architectural screenshot: Workspace > Product Manager */
+.breadcrumbContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--text-sm, 13px);
+  color: var(--color-text-secondary, #74736B);
+}
+
+.breadcrumbRoot {
+  font-weight: var(--font-medium, 500);
+  color: var(--color-text-muted, #929087);
+}
+
+.breadcrumbSeparator {
+  color: var(--color-border-strong, #D0CCC1);
+}
+
+.breadcrumbCurrent {
+  font-weight: var(--font-semibold, 600);
+  color: var(--color-text, #252621);
+  letter-spacing: -0.01em;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 16px);
+}
+
+/* Database Connection Pill */
+.dbStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 12px;
+  background-color: var(--color-surface, #FDFCFA);
+  border: 1px solid var(--color-border, #E3E0D8);
+  border-radius: var(--radius-full, 9999px);
+  font-size: var(--text-xs, 12px);
+  font-weight: var(--font-medium, 500);
+  color: var(--color-text-secondary, #74736B);
+}
+
+.liveIndicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--color-success, #347451);
+  box-shadow: 0 0 6px rgba(52, 116, 81, 0.5);
+  animation: pulseDot 2.4s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+}
+
+/* Top Right User Profile Area (No sign out here - sign out is in left sidebar bottom) */
+.userProfileArea {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.superAdminBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  background-color: #F7EEDC;
+  border: 1px solid #E4BE78;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 11px;
+  font-weight: 650;
+  color: #986A28;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #986A28;
+}
+
+.userName {
+  font-size: var(--text-sm, 13px);
+  font-weight: var(--font-medium, 500);
+  color: var(--color-text, #252621);
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 0 var(--space-4, 16px);
+  }
+
+  .dbStatusPill {
+    display: none;
+  }
+}

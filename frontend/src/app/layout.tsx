@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Shell } from "@/components/layout/shell";
-import { TranslationProvider } from "@/context/TranslationContext";
+import { TranslationProvider, AuthProvider } from "@/context";
 
 export const metadata: Metadata = {
   title: "Tile Catalogue — Product workspace",
@@ -17,7 +17,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <TranslationProvider defaultLocale="en">
-          <Shell>{children}</Shell>
+          <AuthProvider>
+            <Shell>{children}</Shell>
+          </AuthProvider>
         </TranslationProvider>
       </body>
     </html>

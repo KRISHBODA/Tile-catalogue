@@ -28,9 +28,32 @@ export interface BackendResponse<T = unknown> {
 
 class ApiClient {
   private readonly baseUrl: string;
+  private token: string | null = null;
 
   constructor(baseUrl: string = API_CONFIG.BASE_URL) {
     this.baseUrl = baseUrl.replace(/\/+$/, "");
+  }
+
+  public setToken(token: string | null): void {
+    this.token = token;
+    if (typeof window !== "undefined") {
+      if (token) {
+        localStorage.setItem("tile_catalog_auth_token", token);
+      } else {
+        localStorage.removeItem("tile_catalog_auth_token");
+      }
+    }
+  }
+
+  public getToken(): string | null {
+    if (!this.token && typeof window !== "undefined") {
+      this.token = localStorage.getItem("tile_catalog_auth_token");
+    }
+    return this.token;
+  }
+
+  public clearToken(): void {
+    this.setToken(null);
   }
 
   private buildUrl(path: string, params?: Record<string, string | number | boolean | undefined>): string {
@@ -52,10 +75,14 @@ class ApiClient {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT_MS);
 
+    const token = this.getToken();
+    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
     try {
       const response = await fetch(url, {
         headers: {
           ...API_CONFIG.HEADERS,
+          ...authHeaders,
           ...headers,
         },
         signal: controller.signal,

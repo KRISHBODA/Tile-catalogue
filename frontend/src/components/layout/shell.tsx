@@ -1,72 +1,127 @@
 "use client";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  Grid2X2,
-  Layers,
-  BookOpen,
-  History,
-  PanelLeftClose,
-  Menu,
-} from "lucide-react";
-import { useState } from "react";
-import { app, navigation } from "@/config/app";
+
+import React, { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth, useTranslation } from "@/context";
+import { LoadingSpinner } from "@/components/common";
+import { Sidebar } from "./Sidebar";
+import { Topbar } from "./Topbar";
+import styles from "./shell.module.css";
+
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const [open, setOpen] = useState(false);
-  const icons = { products: Grid2X2, builder: BookOpen, history: History };
+  const router = useRouter();
+  const { t } = useTranslation();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Restore sidebar collapse state from storage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sidebar_collapsed");
+      if (saved === "true") {
+        setIsCollapsed(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Authentication Guard: Disallow entering without login
+  useEffect(() => {
+    if (!isLoading) {
+      if (!isAuthenticated && path !== "/login") {
+        router.replace("/login");
+      } else if (isAuthenticated && path === "/login") {
+        router.replace("/products");
+      }
+    }
+  }, [isLoading, isAuthenticated, path, router]);
+
+  const handleToggleSidebar = () => {
+    if (typeof window !== "undefined" && window.innerWidth <= 900) {
+      setIsMobileOpen((prev) => !prev);
+    } else {
+      setIsCollapsed((prev) => {
+        const next = !prev;
+        try {
+          localStorage.setItem("sidebar_collapsed", next ? "true" : "false");
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+    }
+  };
+
+  // 1. Initial Auth Loading State
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "var(--color-bg, #F5F3EE)",
+        }}
+      >
+        <LoadingSpinner size="lg" message={t("common.loading")} />
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated user on protected route: hold and redirect
+  if (!isAuthenticated && path !== "/login") {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "var(--color-bg, #F5F3EE)",
+        }}
+      >
+        <LoadingSpinner size="lg" message={t("common.loading")} />
+      </div>
+    );
+  }
+
+  // 3. For /login, render full clean view without navigation shell
+  if (path === "/login") {
+    return <>{children}</>;
+  }
+
   return (
-    <div className="shell">
-      <a className="skip-link" href="#main">
+    <div className={styles.layoutContainer}>
+      <a className={styles.skipLink} href="#main-content">
         Skip to content
       </a>
-      <aside className={open ? "sidebar open" : "sidebar"}>
-        <div className="brand">
-          <Layers size={26} />
-          <span>
-            {app.name}
-            <small>THE MATERIAL WORKSPACE</small>
-          </span>
-        </div>
-        <div className="nav-label">WORKSPACE</div>
-        <nav>
-          {navigation.map((n) => {
-            const Icon = icons[n.icon];
-            return (
-              <Link
-                key={n.href}
-                onClick={() => setOpen(false)}
-                href={n.href}
-                aria-current={path === n.href ? "page" : undefined}
-              >
-                <Icon size={18} />
-                <span>{n.label}</span>
-                {n.icon !== "products" && <small>Next</small>}
-              </Link>
-            );
-          })}
-        </nav>
-      </aside>
-      <div className="main-shell">
-        <header className="topbar">
-          <button
-            className="mobile-toggle"
-            aria-label="Toggle navigation"
-            aria-expanded={open}
-            onClick={() => setOpen(!open)}
-          >
-            {open ? <PanelLeftClose size={20} /> : <Menu size={20} />}
-          </button>
-          <span>
-            Workspace <span className="breadcrumb">/</span>{" "}
-            <strong>
-              {navigation.find((n) => n.href === path)?.label || "Products"}
-            </strong>
-          </span>
 
-        </header>
-        <main id="main">{children}</main>
+      {/* Modern Luxury Studio Sidebar */}
+      <Sidebar
+        isCollapsed={isCollapsed}
+        onToggleCollapse={handleToggleSidebar}
+        isMobileOpen={isMobileOpen}
+        onCloseMobile={() => setIsMobileOpen(false)}
+      />
 
+      {/* Main Shell Viewport */}
+      <div
+        className={`${styles.mainContent} ${isCollapsed ? styles.collapsed : ""}`}
+      >
+        {/* Modern Topbar with 3 Horizontal Lines Menu Toggle */}
+        <Topbar
+          onToggleSidebar={handleToggleSidebar}
+          isSidebarCollapsed={isCollapsed}
+        />
+
+        <main id="main-content" className={styles.main}>
+          {children}
+        </main>
       </div>
     </div>
   );

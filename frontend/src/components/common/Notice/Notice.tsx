@@ -1,29 +1,65 @@
+"use client";
+
 import React from "react";
-import { X } from "lucide-react";
+import { Info, CheckCircle2, AlertTriangle, AlertCircle, X } from "lucide-react";
+import { useTranslation } from "@/context";
 import styles from "./Notice.module.css";
 
+export type NoticeVariant = "info" | "success" | "warning" | "error";
+
 export interface NoticeProps {
-  type?: "info" | "error" | "success";
-  message: string;
+  type?: NoticeVariant;
+  title?: string;
+  message?: string;
+  children?: React.ReactNode;
   onDismiss?: () => void;
+  action?: React.ReactNode;
   className?: string;
 }
 
-export function Notice({ type = "info", message, onDismiss, className = "" }: NoticeProps) {
-  if (!message) return null;
+const ICONS: Record<NoticeVariant, React.ComponentType<{ size?: number; className?: string }>> = {
+  info: Info,
+  success: CheckCircle2,
+  warning: AlertTriangle,
+  error: AlertCircle,
+};
 
-  const typeClass = styles[type] || "";
+export function Notice({
+  type = "info",
+  title,
+  message,
+  children,
+  onDismiss,
+  action,
+  className = "",
+}: NoticeProps) {
+  const { t } = useTranslation();
+  if (!message && !children && !title) return null;
+
+  const IconComponent = ICONS[type] || Info;
+  const typeClass = styles[type] || styles.info;
 
   return (
     <div
       className={`library-notice ${styles.notice} ${typeClass} ${className}`.trim()}
       role={type === "error" ? "alert" : "status"}
     >
-      <span>{message}</span>
+      <div className={styles.iconWrapper}>
+        <IconComponent size={18} className={styles.icon} />
+      </div>
+
+      <div className={styles.content}>
+        {title && <h5 className={styles.title}>{title}</h5>}
+        {message && <p className={styles.message}>{message}</p>}
+        {children}
+      </div>
+
+      {action && <div className={styles.action}>{action}</div>}
+
       {onDismiss && (
         <button
           type="button"
-          aria-label="Dismiss message"
+          aria-label={t("common.dismiss")}
           className={styles.dismissButton}
           onClick={onDismiss}
         >

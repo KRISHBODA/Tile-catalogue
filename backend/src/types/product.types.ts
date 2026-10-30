@@ -34,7 +34,7 @@ export interface UpdateProductDTO {
   imageUrl?: string;
 }
 
-export interface ProductFilterParams extends PaginationParams {
+export interface  ProductFilterParams extends PaginationParams {
   category?: string;
   finish?: string;
   inStock?: boolean;

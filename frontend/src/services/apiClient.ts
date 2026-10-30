@@ -14,6 +14,7 @@ export class ApiError extends Error {
 
 export interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
+  _retry?: boolean;
 }
 
 export interface BackendResponse<T = unknown> {
@@ -28,32 +29,73 @@ export interface BackendResponse<T = unknown> {
 
 class ApiClient {
   private readonly baseUrl: string;
-  private token: string | null = null;
+  private accessToken: string | null = null;
+  private refreshToken: string | null = null;
+  private isRefreshing: boolean = false;
+  private refreshSubscribers: Array<(token: string) => void> = [];
 
   constructor(baseUrl: string = API_CONFIG.BASE_URL) {
     this.baseUrl = baseUrl.replace(/\/+$/, "");
   }
 
-  public setToken(token: string | null): void {
-    this.token = token;
-    if (typeof window !== "undefined") {
-      if (token) {
-        localStorage.setItem("tile_catalog_auth_token", token);
-      } else {
-        localStorage.removeItem("tile_catalog_auth_token");
+  public setTokens(tokens: { accessToken?: string | null; refreshToken?: string | null }): void {
+    if (tokens.accessToken !== undefined) {
+      this.accessToken = tokens.accessToken;
+      if (typeof window !== "undefined") {
+        if (tokens.accessToken) {
+          localStorage.setItem("tile_catalog_access_token", tokens.accessToken);
+        } else {
+          localStorage.removeItem("tile_catalog_access_token");
+        }
+      }
+    }
+
+    if (tokens.refreshToken !== undefined) {
+      this.refreshToken = tokens.refreshToken;
+      if (typeof window !== "undefined") {
+        if (tokens.refreshToken) {
+          localStorage.setItem("tile_catalog_refresh_token", tokens.refreshToken);
+        } else {
+          localStorage.removeItem("tile_catalog_refresh_token");
+        }
       }
     }
   }
 
-  public getToken(): string | null {
-    if (!this.token && typeof window !== "undefined") {
-      this.token = localStorage.getItem("tile_catalog_auth_token");
+  public getAccessToken(): string | null {
+    if (!this.accessToken && typeof window !== "undefined") {
+      this.accessToken =
+        localStorage.getItem("tile_catalog_access_token") ||
+        localStorage.getItem("tile_catalog_auth_token");
     }
-    return this.token;
+    return this.accessToken;
+  }
+
+  public getRefreshToken(): string | null {
+    if (!this.refreshToken && typeof window !== "undefined") {
+      this.refreshToken = localStorage.getItem("tile_catalog_refresh_token");
+    }
+    return this.refreshToken;
+  }
+
+  public clearTokens(): void {
+    this.setTokens({ accessToken: null, refreshToken: null });
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("tile_catalog_auth_token");
+    }
+  }
+
+  // Backward compatibility alias methods
+  public setToken(token: string | null): void {
+    this.setTokens({ accessToken: token });
+  }
+
+  public getToken(): string | null {
+    return this.getAccessToken();
   }
 
   public clearToken(): void {
-    this.setToken(null);
+    this.clearTokens();
   }
 
   private buildUrl(path: string, params?: Record<string, string | number | boolean | undefined>): string {
@@ -68,14 +110,69 @@ class ApiClient {
     return url.toString();
   }
 
+  private async performTokenRefresh(): Promise<string> {
+    if (this.isRefreshing) {
+      return new Promise<string>((resolve) => {
+        this.refreshSubscribers.push((token: string) => resolve(token));
+      });
+    }
+
+    this.isRefreshing = true;
+    const currentRefreshToken = this.getRefreshToken();
+
+    if (!currentRefreshToken) {
+      this.isRefreshing = false;
+      this.clearTokens();
+      throw new ApiError("No refresh token available", 401);
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/auth/refresh`, {
+        method: "POST",
+        headers: {
+          ...API_CONFIG.HEADERS,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refreshToken: currentRefreshToken }),
+      });
+
+      const resData = (await response.json()) as BackendResponse<{
+        accessToken: string;
+        refreshToken: string;
+      }>;
+
+      if (!response.ok || !resData.success || !resData.data?.accessToken) {
+        throw new Error(resData.message || "Failed to refresh token.");
+      }
+
+      const { accessToken, refreshToken: newRefreshToken } = resData.data;
+      this.setTokens({
+        accessToken,
+        refreshToken: newRefreshToken,
+      });
+
+      const subscribers = [...this.refreshSubscribers];
+      this.refreshSubscribers = [];
+      subscribers.forEach((callback) => callback(accessToken));
+
+      return accessToken;
+    } catch (err) {
+      this.clearTokens();
+      this.refreshSubscribers = [];
+      throw err;
+    } finally {
+      this.isRefreshing = false;
+    }
+  }
+
   public async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const { params, headers, ...restOptions } = options;
+    const { params, headers, _retry, ...restOptions } = options;
     const url = this.buildUrl(endpoint, params);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT_MS);
 
-    const token = this.getToken();
+    const token = this.getAccessToken();
     const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
@@ -88,6 +185,31 @@ class ApiClient {
         signal: controller.signal,
         ...restOptions,
       });
+
+      // Handle 401 Unauthorized with Automatic Silent Refresh
+      if (
+        response.status === 401 &&
+        !_retry &&
+        !endpoint.includes("/auth/login") &&
+        !endpoint.includes("/auth/refresh") &&
+        this.getRefreshToken()
+      ) {
+        clearTimeout(timeoutId);
+        try {
+          const newAccessToken = await this.performTokenRefresh();
+          return this.request<T>(endpoint, {
+            ...options,
+            _retry: true,
+            headers: {
+              ...headers,
+              Authorization: `Bearer ${newAccessToken}`,
+            },
+          });
+        } catch {
+          this.clearTokens();
+          throw new ApiError("Session expired. Please sign in again.", 401);
+        }
+      }
 
       const data: BackendResponse<T> = await response.json().catch(() => ({
         success: response.ok,

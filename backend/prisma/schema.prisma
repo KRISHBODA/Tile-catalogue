@@ -62,9 +62,24 @@ model User {
   status       UserStatus @default(ACTIVE)
   roleId       String
   role         Role       @relation(fields: [roleId], references: [id])
+  refreshTokens RefreshToken[]
   lastLoginAt  DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
   @@map("users")
 }
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("refresh_tokens")
+}
+

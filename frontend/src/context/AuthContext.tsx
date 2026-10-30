@@ -8,7 +8,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (payload: LoginPayload) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(profile);
         }
       } catch {
-        authService.logout();
+        void authService.logout();
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -40,8 +40,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(res.user);
   };
 
-  const logout = () => {
-    authService.logout();
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
   };
 

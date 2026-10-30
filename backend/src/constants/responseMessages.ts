@@ -21,4 +21,7 @@ export const ResponseMessages = {
   FORBIDDEN: 'Access denied. You do not have the required permissions.',
   ACCOUNT_INACTIVE: 'Your account is inactive or suspended. Please contact Super Admin.',
   USER_NOT_FOUND: 'User account not found.',
+  TOKEN_REFRESH_SUCCESS: 'Access token refreshed successfully.',
+  INVALID_REFRESH_TOKEN: 'Invalid, expired, or revoked refresh token.',
+  LOGOUT_SUCCESS: 'Logged out successfully.',
 } as const;

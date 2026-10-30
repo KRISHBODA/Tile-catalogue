@@ -31,9 +31,13 @@ export const authenticate = async (
 
     let decoded: JwtPayloadData;
     try {
-      decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayloadData;
+      decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayloadData;
     } catch {
-      throw new UnauthorizedError(ResponseMessages.UNAUTHORIZED);
+      try {
+        decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayloadData;
+      } catch {
+        throw new UnauthorizedError(ResponseMessages.UNAUTHORIZED);
+      }
     }
 
     const user = await userRepository.findById(decoded.id);

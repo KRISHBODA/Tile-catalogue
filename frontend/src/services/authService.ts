@@ -17,7 +17,14 @@ export interface AuthUser {
 
 export interface LoginResponse {
   user: AuthUser;
-  token: string;
+  accessToken: string;
+  refreshToken: string;
+  token?: string;
+}
+
+export interface RefreshResponse {
+  accessToken: string;
+  refreshToken: string;
 }
 
 export interface LoginPayload {
@@ -28,8 +35,25 @@ export interface LoginPayload {
 export const authService = {
   login: async (payload: LoginPayload): Promise<LoginResponse> => {
     const res = await apiClient.post<LoginResponse>("/auth/login", payload);
-    if (res?.token) {
-      apiClient.setToken(res.token);
+    if (res?.accessToken || res?.token) {
+      apiClient.setTokens({
+        accessToken: res.accessToken || res.token,
+        refreshToken: res.refreshToken,
+      });
+    }
+    return res;
+  },
+
+  refreshToken: async (token?: string): Promise<RefreshResponse> => {
+    const currentRefreshToken = token || apiClient.getRefreshToken();
+    const res = await apiClient.post<RefreshResponse>("/auth/refresh", {
+      refreshToken: currentRefreshToken,
+    });
+    if (res?.accessToken) {
+      apiClient.setTokens({
+        accessToken: res.accessToken,
+        refreshToken: res.refreshToken,
+      });
     }
     return res;
   },
@@ -38,11 +62,22 @@ export const authService = {
     return apiClient.get<AuthUser>("/auth/me");
   },
 
-  logout: (): void => {
-    apiClient.clearToken();
+  logout: async (): Promise<void> => {
+    const currentRefreshToken = apiClient.getRefreshToken();
+    try {
+      if (currentRefreshToken) {
+        await apiClient.post("/auth/logout", {
+          refreshToken: currentRefreshToken,
+        });
+      }
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      apiClient.clearTokens();
+    }
   },
 
   isAuthenticated: (): boolean => {
-    return !!apiClient.getToken();
+    return !!apiClient.getAccessToken();
   },
 };

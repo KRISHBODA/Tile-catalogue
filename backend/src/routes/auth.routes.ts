@@ -11,6 +11,18 @@ const router = Router();
 router.post('/login', authController.login);
 
 /**
+ * Route: POST /api/v1/auth/refresh
+ * Public endpoint to exchange a valid refresh token for new access & rotated refresh token
+ */
+router.post('/refresh', authController.refresh);
+
+/**
+ * Route: POST /api/v1/auth/logout
+ * Invalidate refresh tokens and terminate session
+ */
+router.post('/logout', authController.logout);
+
+/**
  * Route: GET /api/v1/auth/me
  * Protected endpoint to retrieve authenticated user profile & permissions
  */

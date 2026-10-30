@@ -13,6 +13,10 @@ export interface EnvironmentConfig {
   DATABASE_URL: string;
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
+  JWT_ACCESS_SECRET: string;
+  JWT_ACCESS_EXPIRES_IN: string;
+  JWT_REFRESH_SECRET: string;
+  JWT_REFRESH_EXPIRES_IN: string;
   SUPER_ADMIN_NAME: string;
   SUPER_ADMIN_EMAIL: string;
   SUPER_ADMIN_PASSWORD: string;
@@ -33,7 +37,11 @@ export const env: EnvironmentConfig = {
   API_PREFIX: process.env.API_PREFIX || '/api/v1',
   DATABASE_URL: process.env.DATABASE_URL || '',
   JWT_SECRET: process.env.JWT_SECRET || 'tile-catalogue-default-jwt-secret-dev',
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '15m',
+  JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'tile-catalogue-access-token-secret-2026',
+  JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || 'tile-catalogue-refresh-token-secret-2026-production',
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   SUPER_ADMIN_NAME: process.env.SUPER_ADMIN_NAME || 'Super Admin',
   SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL || 'admin@tilecatalog.com',
   SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD || 'Admin@Tile2026',

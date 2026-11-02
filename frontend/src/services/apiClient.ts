@@ -15,6 +15,7 @@ export class ApiError extends Error {
 export interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
   _retry?: boolean;
+  responseType?: "blob";
 }
 
 export interface BackendResponse<T = unknown> {
@@ -166,7 +167,7 @@ class ApiClient {
   }
 
   public async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const { params, headers, _retry, ...restOptions } = options;
+    const { params, headers, _retry, responseType, ...restOptions } = options;
     const url = this.buildUrl(endpoint, params);
 
     const controller = new AbortController();
@@ -210,6 +211,8 @@ class ApiClient {
           throw new ApiError("Session expired. Please sign in again.", 401);
         }
       }
+
+      if (responseType === "blob" && response.ok) return await response.blob() as T;
 
       const data: BackendResponse<T> = await response.json().catch(() => ({
         success: response.ok,

@@ -1,0 +1,12 @@
+import { Router, raw } from 'express';
+import { authenticate } from '../middlewares/auth.middleware.js';
+import { catalogueController as c } from '../controllers/catalogue.controller.js';
+const router: Router=Router();
+router.use(authenticate);
+router.get('/',c.list);
+router.post('/',c.save);
+router.get('/options',c.options);
+router.post('/options',c.option);
+router.post('/media',raw({type:'application/octet-stream',limit:'50mb'}),c.upload);
+router.get('/media/:id',c.media);
+export default router;

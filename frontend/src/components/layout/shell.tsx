@@ -119,7 +119,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           isSidebarCollapsed={isCollapsed}
         />
 
-        <main id="main-content" className={styles.main}>
+        <main id="main-content" className={`${styles.main} ${path === "/products" ? styles.productMain : ""}`}>
           {children}
         </main>
       </div>

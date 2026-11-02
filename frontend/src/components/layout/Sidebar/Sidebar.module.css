@@ -4,13 +4,13 @@
   bottom: 0;
   left: 0;
   width: 280px;
-  background-color: #141512;
-  color: #EAE7DF;
+  background-color: #141414;
+  color: #e5e5e5;
   display: flex;
   flex-direction: column;
   z-index: 100;
-  border-right: 1px solid #242520;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+  border-right: 1px solid #232323;
+  box-shadow: none;
   transition: width 240ms cubic-bezier(0.16, 1, 0.3, 1), transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
 }
@@ -26,7 +26,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border-bottom: 1px solid #20211C;
+  border-bottom: 1px solid #1f1f1f;
 }
 
 .headerCollapsed {
@@ -50,7 +50,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #C3A574;
+  color: #9f9f9f;
   flex-shrink: 0;
 }
 
@@ -63,14 +63,14 @@
 .brandName {
   font-size: 1.0625rem;
   font-weight: 650;
-  color: #FFFFFF;
+  color: #ffffff;
   letter-spacing: -0.015em;
   line-height: 1.2;
 }
 
 .brandSub {
   font-size: 0.625rem;
-  color: #A88958;
+  color: #838383;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin-top: 0.25rem;
@@ -82,9 +82,9 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background-color: #1D1E18;
-  border: 1px solid #2E2F26;
-  color: #A7A69E;
+  background-color: #1c1c1c;
+  border: 1px solid #2c2c2c;
+  color: #a4a4a4;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -94,19 +94,19 @@
 }
 
 .hamburgerBtn:hover {
-  background-color: #272821;
-  border-color: #C3A574;
-  color: #FFFFFF;
-  box-shadow: 0 0 10px rgba(195, 165, 116, 0.25);
+  background-color: #252525;
+  border-color: #9f9f9f;
+  color: #ffffff;
+  box-shadow: none;
 }
 
 .hamburgerBtnRail {
   width: 42px;
   height: 42px;
   border-radius: 10px;
-  background-color: #1F201A;
-  border: 1px solid #323329;
-  color: #C3A574;
+  background-color: #1e1e1e;
+  border: 1px solid #2f2f2f;
+  color: #9f9f9f;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -115,9 +115,9 @@
 }
 
 .hamburgerBtnRail:hover {
-  background-color: #2A2B23;
-  border-color: #C3A574;
-  color: #FFFFFF;
+  background-color: #282828;
+  border-color: #9f9f9f;
+  color: #ffffff;
   transform: scale(1.05);
 }
 
@@ -134,7 +134,7 @@
 .sectionLabel {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #A88958;
+  color: #838383;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   padding: 0.75rem 0.75rem 0.5rem;
@@ -156,7 +156,7 @@
   padding: 0.75rem 0.875rem;
   min-height: 46px;
   border-radius: 10px;
-  color: #B4B2A8;
+  color: #afafaf;
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
@@ -172,8 +172,8 @@
 }
 
 .navItem:hover {
-  color: #FFFFFF;
-  background-color: #1C1D18;
+  color: #ffffff;
+  background-color: #1b1b1b;
   transform: translateX(2px);
 }
 
@@ -183,11 +183,11 @@
 
 /* Active Nav Item */
 .navItem.active {
-  color: #FFFFFF;
-  background-color: #22231E;
+  color: #ffffff;
+  background-color: #212121;
   font-weight: 600;
-  border: 1px solid #383930;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  border: 1px solid #363636;
+  box-shadow: none;
 }
 
 .navItem.active::before {
@@ -197,18 +197,18 @@
   top: 7px;
   bottom: 7px;
   width: 3.5px;
-  background-color: #C3A574;
+  background-color: #9f9f9f;
   border-radius: 0 4px 4px 0;
-  box-shadow: 0 0 8px rgba(195, 165, 116, 0.6);
+  box-shadow: none;
 }
 
 .navItem.active .navIcon {
-  color: #C3A574;
+  color: #9f9f9f;
 }
 
 .navIcon {
   flex-shrink: 0;
-  color: #8C8B82;
+  color: #888888;
   transition: color 180ms ease;
   display: flex;
   align-items: center;
@@ -227,9 +227,9 @@
   font-weight: 650;
   padding: 0.1875rem 0.5rem;
   border-radius: 9999px;
-  background-color: #21221D;
-  color: #929087;
-  border: 1px solid #34352C;
+  background-color: #202020;
+  color: #8e8e8e;
+  border: 1px solid #323232;
   margin-left: auto;
   letter-spacing: 0.06em;
   flex-shrink: 0;
@@ -238,8 +238,8 @@
 /* Footer & Left Bottom Sign Out Button */
 .footer {
   padding: 1rem 1rem 1.25rem;
-  border-top: 1px solid #20211C;
-  background-color: #10110E;
+  border-top: 1px solid #1f1f1f;
+  background-color: #101010;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -250,8 +250,8 @@
   align-items: center;
   gap: 0.875rem;
   padding: 0.625rem 0.75rem;
-  background-color: #1A1B16;
-  border: 1px solid #292A23;
+  background-color: #191919;
+  border: 1px solid #272727;
   border-radius: 10px;
 }
 
@@ -266,9 +266,9 @@
   width: 2.375rem;
   height: 2.375rem;
   border-radius: 50%;
-  background-color: #262721;
-  border: 1px solid #3D3F33;
-  color: #FFFFFF;
+  background-color: #252525;
+  border: 1px solid #3a3a3a;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -289,13 +289,13 @@
 .userName {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #FFFFFF;
+  color: #ffffff;
   line-height: 1.25;
 }
 
 .userRole {
   font-size: 0.6875rem;
-  color: #C3A574;
+  color: #9f9f9f;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
@@ -310,10 +310,10 @@
   gap: 0.625rem;
   width: 100%;
   height: 40px;
-  background-color: #1A1B16;
-  border: 1px solid #292A23;
+  background-color: #191919;
+  border: 1px solid #272727;
   border-radius: 8px;
-  color: #B4B2A8;
+  color: #afafaf;
   font-size: 0.84rem;
   font-weight: 500;
   cursor: pointer;
@@ -321,9 +321,9 @@
 }
 
 .signOutButton:hover {
-  background-color: #301C1A;
-  border-color: #552824;
-  color: #FF9B91;
+  background-color: #222222;
+  border-color: #363636;
+  color: #b9b9b9;
 }
 
 .collapsed .signOutButton {

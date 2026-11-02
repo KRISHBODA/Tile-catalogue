@@ -101,3 +101,11 @@
   font-size: var(--text-xs, 12px);
   color: var(--color-text-secondary, #74736B);
 }
+
+/* The common component renders its own chevron. */
+.wrapper select.select:not([multiple]):is(:not([size]), [size="1"]) { background-image: none; padding-inline-end: 2.75rem; }
+.wrapper .chevron { right: 0.875rem; color: #333; }
+@media (forced-colors: active) {
+  .wrapper .select { appearance: auto; }
+  .wrapper .chevron { display: none; }
+}

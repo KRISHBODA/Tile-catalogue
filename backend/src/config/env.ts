@@ -46,3 +46,10 @@ export const env: EnvironmentConfig = {
   SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL || 'admin@tilecatalog.com',
   SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD || 'Admin@Tile2026',
 };
+
+// A hosted deployment must never fall back to public development secrets.
+if (process.env.VERCEL) {
+  for (const key of ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'] as const) {
+    if (!process.env[key]) throw new Error(`Missing required deployment environment variable: ${key}`);
+  }
+}

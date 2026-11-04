@@ -100,15 +100,15 @@ class ApiClient {
   }
 
   private buildUrl(path: string, params?: Record<string, string | number | boolean | undefined>): string {
-    const url = new URL(`${this.baseUrl}${path.startsWith("/") ? path : `/${path}`}`);
+    const url = `${this.baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+    const query = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, val]) => {
-        if (val !== undefined && val !== null && val !== "") {
-          url.searchParams.append(key, String(val));
-        }
+        if (val !== undefined && val !== null && val !== "") query.append(key, String(val));
       });
     }
-    return url.toString();
+    const suffix = query.toString();
+    return suffix ? `${url}${url.includes("?") ? "&" : "?"}${suffix}` : url;
   }
 
   private async performTokenRefresh(): Promise<string> {

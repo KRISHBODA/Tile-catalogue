@@ -117,3 +117,8 @@
   outline: none;
   box-shadow: none;
 }
+
+/* Keep standalone form labels comfortably separated from their controls. */
+.mediaRoleField { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.mediaRoleField select { min-width: 160px; }
+.upload > label { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }

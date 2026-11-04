@@ -10,19 +10,17 @@ export const createApp = (): Application => {
   const app: Application = express();
 
   // 1. Global Pre-Routing Middlewares
-  app.use(
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    let sameOrigin = false;
+    if (origin && req.headers.host) {
+      try { sameOrigin = new URL(origin).host === req.headers.host; } catch { /* Invalid origins are rejected below. */ }
+    }
     cors({
-      origin: (origin, callback) => {
-        // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
-        if (!origin) return callback(null, true);
-        if (env.CORS_ORIGIN.includes(origin) || env.NODE_ENV === 'development') {
-          return callback(null, true);
-        }
-        return callback(new Error(`CORS blocked for origin: ${origin}`));
-      },
+      origin: !origin || sameOrigin || env.CORS_ORIGIN.includes(origin) || env.NODE_ENV === 'development',
       credentials: true,
-    })
-  );
+    })(req, res, next);
+  });
 
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
@@ -47,3 +45,6 @@ export const createApp = (): Application => {
 
   return app;
 };
+
+// Vercel invokes the app directly; local development continues to use server.ts.
+export default createApp();

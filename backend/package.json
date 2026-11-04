@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "rimraf dist && tsc",
+    "build": "prisma generate && rimraf dist && tsc",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "prisma:push": "prisma db push",

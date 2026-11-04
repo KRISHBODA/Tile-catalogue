@@ -32,7 +32,7 @@ const parseCorsOrigin = (origins?: string): string[] => {
 export const env: EnvironmentConfig = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: Number(process.env.PORT) || 5000,
-  HOST: process.env.HOST || '127.0.0.1',
+  HOST: process.env.HOST || '0.0.0.0',
   CORS_ORIGIN: parseCorsOrigin(process.env.CORS_ORIGIN),
   API_PREFIX: process.env.API_PREFIX || '/api/v1',
   DATABASE_URL: process.env.DATABASE_URL || '',
@@ -48,7 +48,7 @@ export const env: EnvironmentConfig = {
 };
 
 // A hosted deployment must never fall back to public development secrets.
-if (process.env.VERCEL) {
+if (process.env.VERCEL || process.env.RENDER || process.env.NODE_ENV === 'production') {
   for (const key of ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'] as const) {
     if (!process.env[key]) throw new Error(`Missing required deployment environment variable: ${key}`);
   }

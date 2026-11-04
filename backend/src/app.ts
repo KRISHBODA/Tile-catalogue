@@ -17,7 +17,12 @@ export const createApp = (): Application => {
       try { sameOrigin = new URL(origin).host === req.headers.host; } catch { /* Invalid origins are rejected below. */ }
     }
     cors({
-      origin: !origin || sameOrigin || env.CORS_ORIGIN.includes(origin) || env.NODE_ENV === 'development',
+      origin:
+        !origin ||
+        sameOrigin ||
+        env.CORS_ORIGIN.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        env.NODE_ENV === 'development',
       credentials: true,
     })(req, res, next);
   });

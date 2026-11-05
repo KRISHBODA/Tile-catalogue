@@ -1,29 +1,69 @@
 import { prisma } from '../config/database.js';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, stat, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { CatalogueDesign, CatalogueOption, ICatalogueRepository } from '../types/catalogue.types.js';
+import {
+  PutObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+} from '@aws-sdk/client-s3';
+import { r2Client, isR2Configured } from '../config/r2.js';
+import { env } from '../config/env.js';
+
+function getContentType(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'png': return 'image/png';
+    case 'jpg':
+    case 'jpeg': return 'image/jpeg';
+    case 'webp': return 'image/webp';
+    case 'mp4': return 'video/mp4';
+    case 'webm': return 'video/webm';
+    default: return 'application/octet-stream';
+  }
+}
+
+async function streamToBuffer(stream: unknown): Promise<Buffer> {
+  const s = stream as { transformToByteArray?: () => Promise<Uint8Array>; on?: (event: string, fn: (...args: any[]) => void) => void } | null;
+  if (s && typeof s.transformToByteArray === 'function') {
+    const bytes = await s.transformToByteArray();
+    return Buffer.from(bytes);
+  }
+  return new Promise<Buffer>((resolve, reject) => {
+    if (!s || typeof s.on !== 'function') {
+      return resolve(Buffer.alloc(0));
+    }
+    const chunks: Buffer[] = [];
+    s.on('data', (chunk: Buffer | Uint8Array) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    });
+    s.on('error', reject);
+    s.on('end', () => resolve(Buffer.concat(chunks)));
+  });
+}
+
 // Dedicated additive tables preserve the existing commerce Product schema and user tables.
 let setup: Promise<void> | undefined;
 async function ready() {
   if (!setup) setup = (async () => {
     await Promise.all([
-    prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS catalogue_designs (owner TEXT NOT NULL, id TEXT NOT NULL, code TEXT NOT NULL, revision INTEGER NOT NULL, payload JSONB NOT NULL, PRIMARY KEY(owner,id), UNIQUE(owner,code))'),
-    prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS catalogue_option_initialization (owner TEXT PRIMARY KEY)'),
-    prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS catalogue_options (owner TEXT NOT NULL, id TEXT NOT NULL, category TEXT NOT NULL, normalized TEXT NOT NULL, revision INTEGER NOT NULL, payload JSONB NOT NULL, PRIMARY KEY(owner,id), UNIQUE(owner,category,normalized))'),
-    prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS catalogue_media (owner TEXT NOT NULL, id TEXT NOT NULL, bytes BYTEA NOT NULL, PRIMARY KEY(owner,id))'),
-    prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS catalogue_media_manifest (owner TEXT NOT NULL, id TEXT NOT NULL, size INTEGER NOT NULL, PRIMARY KEY(owner,id))'),
-    prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS catalogue_media_blocks (owner TEXT NOT NULL, id TEXT NOT NULL, part_index INTEGER NOT NULL, bytes BYTEA NOT NULL, PRIMARY KEY(owner,id,part_index))'),
-    prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS catalogue_media_parts (owner TEXT NOT NULL, upload_id TEXT NOT NULL, part_index INTEGER NOT NULL, bytes BYTEA NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(owner,upload_id,part_index))')
+      prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS catalogue_designs (owner TEXT NOT NULL, id TEXT NOT NULL, code TEXT NOT NULL, revision INTEGER NOT NULL, payload JSONB NOT NULL, PRIMARY KEY(owner,id), UNIQUE(owner,code))'),
+      prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS catalogue_option_initialization (owner TEXT PRIMARY KEY)'),
+      prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS catalogue_options (owner TEXT NOT NULL, id TEXT NOT NULL, category TEXT NOT NULL, normalized TEXT NOT NULL, revision INTEGER NOT NULL, payload JSONB NOT NULL, PRIMARY KEY(owner,id), UNIQUE(owner,category,normalized))'),
     ]);
   })().catch(e => { setup = undefined; throw e; });
   await setup;
 }
+
 export class CatalogueRepository implements ICatalogueRepository {
   async list(owner: string) {
     await ready();
     const rows = await prisma.$queryRaw<{payload: CatalogueDesign}[]>`SELECT payload FROM catalogue_designs WHERE owner=${owner} ORDER BY payload->>'createdAt' DESC`;
     return rows.map(r => r.payload);
   }
+
   async save(owner: string, designs: CatalogueDesign[], expected: number[]) {
     await ready();
     await prisma.$transaction(async tx => {
@@ -39,6 +79,7 @@ export class CatalogueRepository implements ICatalogueRepository {
     }, { timeout: 30000 });
     return designs;
   }
+
   async initializeOptions(owner: string, options: CatalogueOption[]) {
     await ready();
     await prisma.$transaction(async tx => {
@@ -49,11 +90,13 @@ export class CatalogueRepository implements ICatalogueRepository {
       }
     }, { timeout: 30000 });
   }
+
   async options(owner: string) {
     await ready();
     const rows=await prisma.$queryRaw<{payload: CatalogueOption}[]>`SELECT payload FROM catalogue_options WHERE owner=${owner} ORDER BY category,normalized`;
     return rows.map(r=>r.payload);
   }
+
   async saveOption(owner: string, option: CatalogueOption, expected: number) {
     await ready();
     if (!expected) await prisma.$executeRaw`INSERT INTO catalogue_options(owner,id,category,normalized,revision,payload) VALUES(${owner},${option.id},${option.group},${option.value.toLowerCase()},${option.revision},${JSON.stringify(option)}::jsonb)`;
@@ -63,99 +106,216 @@ export class CatalogueRepository implements ICatalogueRepository {
     }
     return this.options(owner);
   }
+
   async removeOption(owner: string, id: string, revision: number) {
     await ready();
     const count=await prisma.$executeRaw`DELETE FROM catalogue_options WHERE owner=${owner} AND id=${id} AND revision=${revision}`;
     if(count!==1) throw new Error('CATALOGUE_CONFLICT');
     return this.options(owner);
   }
-  async putMedia(owner: string, id: string, bytes: Buffer) {
-    await ready();
-    const blockSize=3*1024*1024;
-    await prisma.$transaction(async tx=>{
-      await tx.$executeRaw`INSERT INTO catalogue_media_manifest(owner,id,size) VALUES(${owner},${id},${bytes.length})`;
-      for(let offset=0,index=0;offset<bytes.length;offset+=blockSize,index++) {
-        const block=bytes.subarray(offset,offset+blockSize);
-        await tx.$executeRaw`INSERT INTO catalogue_media_blocks(owner,id,part_index,bytes) VALUES(${owner},${id},${index},${block})`;
-      }
-    },{timeout:120000});
-  }
-  private async storedMedia(owner: string,id: string):Promise<Buffer|null> {
-    const manifests=await prisma.$queryRaw<{size:number}[]>`SELECT size FROM catalogue_media_manifest WHERE owner=${owner} AND id=${id}`;
-    if(manifests.length) {
-      const blocks: Buffer[]=[];
-      const count=Math.ceil(Number(manifests[0].size)/(3*1024*1024));
-      for(let index=0;index<count;index++) {
-        const rows=await prisma.$queryRaw<{bytes:Uint8Array}[]>`SELECT bytes FROM catalogue_media_blocks WHERE owner=${owner} AND id=${id} AND part_index=${index}`;
-        if(!rows.length)throw new Error('Stored media block is missing');
-        blocks.push(Buffer.from(rows[0].bytes));
-      }
-      const result=Buffer.concat(blocks);
-      if(result.length!==Number(manifests[0].size))throw new Error('Stored media is incomplete');
-      return result;
+
+  async putMedia(owner: string, id: string, bytes: Buffer): Promise<void> {
+    if (isR2Configured()) {
+      const key = `${owner}/${id}`;
+      await r2Client.send(
+        new PutObjectCommand({
+          Bucket: env.R2_BUCKET_NAME,
+          Key: key,
+          Body: bytes,
+          ContentType: getContentType(id),
+          CacheControl: 'public, max-age=31536000, immutable',
+        })
+      );
+      return;
     }
-    const rows=await prisma.$queryRaw<{bytes:Uint8Array}[]>`SELECT bytes FROM catalogue_media WHERE owner=${owner} AND id=${id}`;
-    return rows.length?Buffer.from(rows[0].bytes):null;
+    // Local disk fallback for local development when R2 credentials are not set
+    const folder = path.resolve('data/catalogue-media', owner);
+    await mkdir(folder, { recursive: true });
+    await writeFile(path.join(folder, id), bytes);
   }
-  // Used only by the explicit, approved local-to-database media migration.
-  async copyLocalMedia(owner: string, id: string, bytes: Buffer) {
-    await ready();
-    const existing=await this.storedMedia(owner,id);
-    if(existing) {
-      if(!existing.equals(bytes))throw new Error('Media ID already exists with different contents');
-      return false;
+
+  // Used by media migration / sync script
+  async copyLocalMedia(owner: string, id: string, bytes: Buffer): Promise<boolean> {
+    try {
+      const size = await this.mediaSize(owner, id);
+      if (size === bytes.length) {
+        return false;
+      }
+    } catch {
+      // Not yet present, proceed to upload
     }
-    await this.putMedia(owner,id,bytes);
-    const stored=await this.storedMedia(owner,id);
-    if(!stored||!stored.equals(bytes))throw new Error('Stored media verification failed');
+    await this.putMedia(owner, id, bytes);
     return true;
   }
-  async readMedia(owner: string, id: string) {
-    await ready();
-    const stored=await this.storedMedia(owner,id);
-    return stored??await readFile(path.resolve('data/catalogue-media',owner,id));
-  }
-  async mediaSize(owner: string, id: string) {
-    await ready();
-    const manifests=await prisma.$queryRaw<{size:number}[]>`SELECT size FROM catalogue_media_manifest WHERE owner=${owner} AND id=${id}`;
-    if(manifests.length)return Number(manifests[0].size);
-    const rows=await prisma.$queryRaw<{size: number}[]>`SELECT octet_length(bytes) AS size FROM catalogue_media WHERE owner=${owner} AND id=${id}`;
-    if(rows.length)return Number(rows[0].size);
-    return (await stat(path.resolve('data/catalogue-media',owner,id))).size;
-  }
-  async mediaPart(owner: string, id: string, offset: number, length: number) {
-    await ready();
-    const manifests=await prisma.$queryRaw<{size:number}[]>`SELECT size FROM catalogue_media_manifest WHERE owner=${owner} AND id=${id}`;
-    if(manifests.length) {
-      const blockIndex=Math.floor(offset/(3*1024*1024));
-      const rows=await prisma.$queryRaw<{bytes:Uint8Array}[]>`SELECT bytes FROM catalogue_media_blocks WHERE owner=${owner} AND id=${id} AND part_index=${blockIndex}`;
-      if(!rows.length)throw new Error('Stored media block is missing');
-      return Buffer.from(rows[0].bytes).subarray(offset%(3*1024*1024),offset%(3*1024*1024)+length);
+
+  async readMedia(owner: string, id: string): Promise<Buffer> {
+    if (isR2Configured()) {
+      try {
+        const key = `${owner}/${id}`;
+        const res = await r2Client.send(
+          new GetObjectCommand({
+            Bucket: env.R2_BUCKET_NAME,
+            Key: key,
+          })
+        );
+        return await streamToBuffer(res.Body);
+      } catch (err: unknown) {
+        const awsErr = err as { name?: string; $metadata?: { httpStatusCode?: number } };
+        if (awsErr?.name !== 'NoSuchKey' && awsErr?.$metadata?.httpStatusCode !== 404) {
+          throw err;
+        }
+      }
     }
-    const rows=await prisma.$queryRaw<{bytes: Uint8Array}[]>`SELECT substring(bytes FROM ${offset+1} FOR ${length}) AS bytes FROM catalogue_media WHERE owner=${owner} AND id=${id}`;
-    if(rows.length)return Buffer.from(rows[0].bytes);
-    return (await readFile(path.resolve('data/catalogue-media',owner,id))).subarray(offset,offset+length);
+    // Fallback: check local disk
+    try {
+      return await readFile(path.resolve('data/catalogue-media', owner, id));
+    } catch {
+      const enoent = new Error('Media not found') as NodeJS.ErrnoException;
+      enoent.code = 'ENOENT';
+      throw enoent;
+    }
   }
-  async putUploadPart(owner: string, upload: string, index: number, bytes: Buffer) {
-    await ready();
-    await prisma.$executeRaw`DELETE FROM catalogue_media_parts WHERE owner=${owner} AND created_at < CURRENT_TIMESTAMP - INTERVAL '1 day'`;
-    await prisma.$executeRaw`INSERT INTO catalogue_media_parts(owner,upload_id,part_index,bytes) VALUES(${owner},${upload},${index},${bytes}) ON CONFLICT(owner,upload_id,part_index) DO UPDATE SET bytes=EXCLUDED.bytes,created_at=CURRENT_TIMESTAMP`;
+
+  async mediaSize(owner: string, id: string): Promise<number> {
+    if (isR2Configured()) {
+      try {
+        const key = `${owner}/${id}`;
+        const res = await r2Client.send(
+          new HeadObjectCommand({
+            Bucket: env.R2_BUCKET_NAME,
+            Key: key,
+          })
+        );
+        if (typeof res.ContentLength === 'number') {
+          return res.ContentLength;
+        }
+      } catch (err: unknown) {
+        const awsErr = err as { name?: string; $metadata?: { httpStatusCode?: number } };
+        if (awsErr?.name !== 'NoSuchKey' && awsErr?.$metadata?.httpStatusCode !== 404) {
+          throw err;
+        }
+      }
+    }
+    try {
+      return (await stat(path.resolve('data/catalogue-media', owner, id))).size;
+    } catch {
+      const enoent = new Error('Media not found') as NodeJS.ErrnoException;
+      enoent.code = 'ENOENT';
+      throw enoent;
+    }
   }
-  async readUploadParts(owner: string, upload: string) {
-    await ready();
-    const indices=await prisma.$queryRaw<{index:number}[]>`SELECT part_index AS index FROM catalogue_media_parts WHERE owner=${owner} AND upload_id=${upload} ORDER BY part_index`;
-    const parts:{index:number;bytes:Buffer}[]=[];
-    for(const item of indices) {
-      const index=Number(item.index);
-      const rows=await prisma.$queryRaw<{bytes:Uint8Array}[]>`SELECT bytes FROM catalogue_media_parts WHERE owner=${owner} AND upload_id=${upload} AND part_index=${index}`;
-      if(!rows.length)throw new Error('Upload part is missing');
-      parts.push({index,bytes:Buffer.from(rows[0].bytes)});
+
+  async mediaPart(owner: string, id: string, offset: number, length: number): Promise<Buffer> {
+    if (isR2Configured()) {
+      try {
+        const key = `${owner}/${id}`;
+        const end = offset + length - 1;
+        const res = await r2Client.send(
+          new GetObjectCommand({
+            Bucket: env.R2_BUCKET_NAME,
+            Key: key,
+            Range: `bytes=${offset}-${end}`,
+          })
+        );
+        return await streamToBuffer(res.Body);
+      } catch (err: unknown) {
+        const awsErr = err as { name?: string; $metadata?: { httpStatusCode?: number } };
+        if (awsErr?.name !== 'NoSuchKey' && awsErr?.$metadata?.httpStatusCode !== 404) {
+          throw err;
+        }
+      }
+    }
+    try {
+      const file = await readFile(path.resolve('data/catalogue-media', owner, id));
+      return file.subarray(offset, offset + length);
+    } catch {
+      const enoent = new Error('Media part not found') as NodeJS.ErrnoException;
+      enoent.code = 'ENOENT';
+      throw enoent;
+    }
+  }
+
+  async putUploadPart(owner: string, upload: string, index: number, bytes: Buffer): Promise<void> {
+    if (isR2Configured()) {
+      const key = `uploads/${owner}/${upload}/${String(index).padStart(6, '0')}`;
+      await r2Client.send(
+        new PutObjectCommand({
+          Bucket: env.R2_BUCKET_NAME,
+          Key: key,
+          Body: bytes,
+          ContentType: 'application/octet-stream',
+        })
+      );
+      return;
+    }
+    const folder = path.resolve('data/catalogue-uploads', owner, upload);
+    await mkdir(folder, { recursive: true });
+    await writeFile(path.join(folder, String(index)), bytes);
+  }
+
+  async readUploadParts(owner: string, upload: string): Promise<{ index: number; bytes: Buffer }[]> {
+    if (isR2Configured()) {
+      const prefix = `uploads/${owner}/${upload}/`;
+      const listRes = await r2Client.send(
+        new ListObjectsV2Command({
+          Bucket: env.R2_BUCKET_NAME,
+          Prefix: prefix,
+        })
+      );
+      const objects = (listRes.Contents || []).sort((a, b) => (a.Key || '').localeCompare(b.Key || ''));
+      const parts: { index: number; bytes: Buffer }[] = [];
+      for (const obj of objects) {
+        if (!obj.Key) continue;
+        const partIndex = parseInt(obj.Key.split('/').pop() || '0', 10);
+        const partRes = await r2Client.send(
+          new GetObjectCommand({
+            Bucket: env.R2_BUCKET_NAME,
+            Key: obj.Key,
+          })
+        );
+        const partBytes = await streamToBuffer(partRes.Body);
+        parts.push({ index: partIndex, bytes: partBytes });
+      }
+      return parts;
+    }
+    const folder = path.resolve('data/catalogue-uploads', owner, upload);
+    const { readdir } = await import('node:fs/promises');
+    const files = await readdir(folder).catch(() => []);
+    const parts: { index: number; bytes: Buffer }[] = [];
+    for (const f of files.sort((a, b) => Number(a) - Number(b))) {
+      const bytes = await readFile(path.join(folder, f));
+      parts.push({ index: Number(f), bytes });
     }
     return parts;
   }
-  async clearUploadParts(owner: string, upload: string) {
-    await ready();
-    await prisma.$executeRaw`DELETE FROM catalogue_media_parts WHERE owner=${owner} AND upload_id=${upload}`;
+
+  async clearUploadParts(owner: string, upload: string): Promise<void> {
+    if (isR2Configured()) {
+      const prefix = `uploads/${owner}/${upload}/`;
+      const listRes = await r2Client.send(
+        new ListObjectsV2Command({
+          Bucket: env.R2_BUCKET_NAME,
+          Prefix: prefix,
+        })
+      );
+      if (listRes.Contents && listRes.Contents.length > 0) {
+        for (const obj of listRes.Contents) {
+          if (obj.Key) {
+            await r2Client.send(
+              new DeleteObjectCommand({
+                Bucket: env.R2_BUCKET_NAME,
+                Key: obj.Key,
+              })
+            );
+          }
+        }
+      }
+      return;
+    }
+    const folder = path.resolve('data/catalogue-uploads', owner, upload);
+    const { rm } = await import('node:fs/promises');
+    await rm(folder, { recursive: true, force: true }).catch(() => {});
   }
 }
+
 export const catalogueRepository = new CatalogueRepository();

@@ -20,6 +20,11 @@ export interface EnvironmentConfig {
   SUPER_ADMIN_NAME: string;
   SUPER_ADMIN_EMAIL: string;
   SUPER_ADMIN_PASSWORD: string;
+  R2_ACCOUNT_ID: string;
+  R2_ACCESS_KEY_ID: string;
+  R2_SECRET_ACCESS_KEY: string;
+  R2_BUCKET_NAME: string;
+  R2_PUBLIC_URL: string;
 }
 
 const parseCorsOrigin = (origins?: string): string[] => {
@@ -45,6 +50,11 @@ export const env: EnvironmentConfig = {
   SUPER_ADMIN_NAME: process.env.SUPER_ADMIN_NAME || 'Super Admin',
   SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL || 'admin@tilecatalog.com',
   SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD || 'Admin@Tile2026',
+  R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID || '',
+  R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID || '',
+  R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY || '',
+  R2_BUCKET_NAME: process.env.R2_BUCKET_NAME || 'tile-catalogue-media',
+  R2_PUBLIC_URL: process.env.R2_PUBLIC_URL || '',
 };
 
 // A hosted deployment must never fall back to public development secrets.

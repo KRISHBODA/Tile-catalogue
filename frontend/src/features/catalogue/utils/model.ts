@@ -7,8 +7,8 @@ export const groups=['size','collection','surface','body','tags','thickness'] as
 export const statuses=['Active','Inactive','Draft','Archived'];
 export type TextField=typeof textFields[number];
 export type BoolField=typeof boolFields[number];
-export const defaultColumns=['tile-face','preview','name','code','size','collection','surface','body','thickness','faces','status'];
-export const columnKeys=[...defaultColumns,...mediaRoles.filter(r=>!['tile-face','preview'].includes(r)),'extraName','alternateName','bodyDetails','tags','colours','group','has360','url360','availableSize','availableCollection','availableSurface','availableBody','availableThickness','hsnCode','showInPdf','private','bookmatch','border','borderShadow','background','inDisplay','createdAt','uploadedBy'];
+export const defaultColumns=['tile-face','preview','name','size','collection','surface','body','thickness','faces','status'];
+export const columnKeys=[...defaultColumns,...mediaRoles.filter(r=>!['tile-face','preview','channel','social-image','social-video'].includes(r)),'extraName','alternateName','bodyDetails','tags','colours','group','availableSize','availableCollection','availableSurface','availableBody','availableThickness','border','inDisplay','createdAt','uploadedBy'];
 export const blank=():CatalogueDesign=>({ ...Object.fromEntries(textFields.map(k=>[k,''])),...Object.fromEntries(boolFields.map(k=>[k,false])),id:'',revision:0,createdAt:'',updatedAt:'',uploadedBy:'',status:'Draft',size:'600 × 1200',thickness:'9',surface:'Matt',body:'Porcelain',media:[],variants:[] } as unknown as CatalogueDesign);
 export function display(d:CatalogueDesign,key:string):string {
  if(key==='faces')return String(d.media.filter(m=>m.role==='tile-face').length);

@@ -212,7 +212,7 @@
       "Archived": "Archived"
     },
     "roles": {
-      "tile-face": "Tile face",
+      "tile-face": "Tile jpeg",
       "preview": "Preview",
       "live-image": "Live image",
       "live-video": "Live video",
@@ -254,7 +254,7 @@
       "inDisplay": "In display",
       "createdAt": "Date & time",
       "uploadedBy": "Uploaded by",
-      "faces": "Faces",
+      "faces": "Randoms",
       "design": "Whole design",
       "alternateName": "Alternate name",
       "bodyDetails": "Body details"

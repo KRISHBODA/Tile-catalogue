@@ -4,6 +4,7 @@ export const CatalogueConstants = {
     collection: ['Marble','Stone','Concrete','Wood'], surface: ['Matt','Polished','Satin'],
     body: ['Porcelain','Ceramic','Full body'], tags: ['New arrival','Bookmatch'], thickness: ['6','8','9','9.5','10','12'],
   },
+  MEDIA_CHUNK_BYTES: 3 * 1024 * 1024,
   MAX_BATCH: 100, MAX_MEDIA: 100, MAX_IMAGE_BYTES: 10 * 1024 * 1024, MAX_VIDEO_BYTES: 50 * 1024 * 1024,
   GROUPS: ['size','collection','surface','body','tags','thickness'],
   TEXT_FIELDS: ['name','code','size','collection','surface','body','thickness','extraName','alternateName','bodyDetails','tags','colours','group','description','availableSize','availableCollection','availableSurface','availableBody','availableThickness','hsnCode','url360','status'],

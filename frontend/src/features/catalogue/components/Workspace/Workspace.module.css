@@ -122,3 +122,5 @@
 .mediaRoleField { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .mediaRoleField select { min-width: 160px; }
 .upload > label { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+
+.mediaError { display: flex; width: 100%; min-height: 80px; align-items: center; justify-content: center; padding: 10px; white-space: normal; overflow-wrap: anywhere; text-align: center; color: #444; background: #f4f4f4; font-size: 13px; line-height: 1.4; }

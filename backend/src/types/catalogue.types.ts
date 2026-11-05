@@ -21,4 +21,9 @@ export interface ICatalogueRepository {
   removeOption(owner: string, id: string, revision: number): Promise<CatalogueOption[]>;
   putMedia(owner: string, id: string, bytes: Buffer): Promise<void>;
   readMedia(owner: string, id: string): Promise<Buffer>;
+  mediaSize(owner: string, id: string): Promise<number>;
+  mediaPart(owner: string, id: string, offset: number, length: number): Promise<Buffer>;
+  putUploadPart(owner: string, upload: string, index: number, bytes: Buffer): Promise<void>;
+  readUploadParts(owner: string, upload: string): Promise<{index: number; bytes: Buffer}[]>;
+  clearUploadParts(owner: string, upload: string): Promise<void>;
 }

@@ -16,6 +16,7 @@ export interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
   _retry?: boolean;
   responseType?: "blob";
+  timeoutMs?: number;
 }
 
 export interface BackendResponse<T = unknown> {
@@ -167,11 +168,11 @@ class ApiClient {
   }
 
   public async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const { params, headers, _retry, responseType, ...restOptions } = options;
+    const { params, headers, _retry, responseType, timeoutMs = API_CONFIG.TIMEOUT_MS, ...restOptions } = options;
     const url = this.buildUrl(endpoint, params);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT_MS);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const token = this.getAccessToken();
     const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};

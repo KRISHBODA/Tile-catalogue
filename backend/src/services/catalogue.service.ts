@@ -54,7 +54,7 @@ export class CatalogueService {
     }
     if(new Set(designs.map(d=>d.code.toLowerCase())).size!==designs.length||new Set(designs.map(d=>d.id)).size!==designs.length) throw new ConflictError(C.MESSAGES.CONFLICT);
     // Verify attachment ownership and existence before committing references.
-    for(const id of new Set(designs.flatMap(d=>d.media.map(m=>m.id)))) { try { await this.repo.readMedia(owner,id); } catch { throw new BadRequestError(C.MESSAGES.MISSING_MEDIA); } }
+    for(const id of new Set(designs.flatMap(d=>d.media.map(m=>m.id)))) { try { await this.repo.mediaSize(owner,id); } catch(error) { if((error as NodeJS.ErrnoException).code==='ENOENT')throw new BadRequestError(C.MESSAGES.MISSING_MEDIA);throw error; } }
     try { return await this.repo.save(owner,designs,expected); } catch { throw new ConflictError(C.MESSAGES.CONFLICT); }
   }
   async option(owner:string, raw:CatalogueOption, remove=false) {
@@ -79,6 +79,28 @@ export class CatalogueService {
     if(!ext||bytes.length>(['mp4','webm'].includes(ext)?C.MAX_VIDEO_BYTES:C.MAX_IMAGE_BYTES)) throw new BadRequestError(C.MESSAGES.MEDIA);
     const id=`${randomUUID()}.${ext}`; await this.repo.putMedia(owner,id,bytes); return {id};
   }
-  async media(owner:string,id:string) { if(!filePattern.test(id)) throw new NotFoundError(C.MESSAGES.MISSING_MEDIA); try{return await this.repo.readMedia(owner,id);}catch{throw new NotFoundError(C.MESSAGES.MISSING_MEDIA);} }
+  async uploadPart(owner:string,upload:string,index:number,bytes:Buffer) {
+    if(!/^[a-f0-9-]{36}$/i.test(upload)||!Number.isInteger(index)||index<0||index>=Math.ceil(C.MAX_VIDEO_BYTES/C.MEDIA_CHUNK_BYTES)||!Buffer.isBuffer(bytes)||!bytes.length||bytes.length>C.MEDIA_CHUNK_BYTES) throw new BadRequestError(C.MESSAGES.MEDIA);
+    await this.repo.putUploadPart(owner,upload,index,bytes);
+  }
+  async finishUpload(owner:string,upload:string,count:number,size:number) {
+    if(!/^[a-f0-9-]{36}$/i.test(upload)||!Number.isInteger(count)||count<1||count>Math.ceil(C.MAX_VIDEO_BYTES/C.MEDIA_CHUNK_BYTES)||!Number.isInteger(size)||size<1||size>C.MAX_VIDEO_BYTES||count!==Math.ceil(size/C.MEDIA_CHUNK_BYTES)) throw new BadRequestError(C.MESSAGES.MEDIA);
+    const parts=await this.repo.readUploadParts(owner,upload);
+    if(parts.length!==count||parts.some((part,i)=>part.index!==i||part.bytes.length!==(i===count-1?size-i*C.MEDIA_CHUNK_BYTES:C.MEDIA_CHUNK_BYTES))) throw new BadRequestError(C.MESSAGES.MEDIA);
+    const result=await this.upload(owner,Buffer.concat(parts.map(part=>part.bytes),size));
+    await this.repo.clearUploadParts(owner,upload);
+    return result;
+  }
+  async mediaInfo(owner:string,id:string) {
+    if(!filePattern.test(id))throw new NotFoundError(C.MESSAGES.MISSING_MEDIA);
+    try{return {size:await this.repo.mediaSize(owner,id),chunkSize:C.MEDIA_CHUNK_BYTES};}catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')throw new NotFoundError(C.MESSAGES.MISSING_MEDIA);throw error;}
+  }
+  async mediaPart(owner:string,id:string,index:number) {
+    if(!filePattern.test(id)||!Number.isInteger(index)||index<0)throw new NotFoundError(C.MESSAGES.MISSING_MEDIA);
+    const info=await this.mediaInfo(owner,id),offset=index*C.MEDIA_CHUNK_BYTES;
+    if(offset>=info.size)throw new NotFoundError(C.MESSAGES.MISSING_MEDIA);
+    try{return await this.repo.mediaPart(owner,id,offset,C.MEDIA_CHUNK_BYTES);}catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')throw new NotFoundError(C.MESSAGES.MISSING_MEDIA);throw error;}
+  }
+  async media(owner:string,id:string) { if(!filePattern.test(id)) throw new NotFoundError(C.MESSAGES.MISSING_MEDIA); try{return await this.repo.readMedia(owner,id);}catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')throw new NotFoundError(C.MESSAGES.MISSING_MEDIA);throw error;} }
 }
 export const catalogueService=new CatalogueService();

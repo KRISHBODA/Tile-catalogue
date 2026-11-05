@@ -125,7 +125,7 @@
     "dropMedia": "Drop files here or choose files",
     "uploadLimit": "PNG, JPEG or WebP up to 10 MB each. MP4 or WebM up to 50 MB each.",
     "mediaLimit": "Use up to 100 media files per design.",
-    "mediaError": "Image unavailable. Sign in again and retry.",
+    "mediaError": "Image could not load. Try again.",
     "noMedia": "None",
     "openPhotos": "Open photos ({count})",
     "photoCounter": "Photo {current} of {total}",
@@ -260,6 +260,8 @@
       "bodyDetails": "Body details"
     },
     "replacePreview": "Replace preview",
-    "removePreview": "Remove preview"
+    "removePreview": "Remove preview",
+    "mediaMissing": "Image file is unavailable.",
+    "mediaSignIn": "Session expired. Please sign in again."
   }
 }

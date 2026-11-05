@@ -3,16 +3,17 @@ import {useEffect,useState,useRef} from 'react';
 import Image from 'next/image';
 import {X,ChevronLeft,ChevronRight,ImageOff} from 'lucide-react';
 import {catalogueService} from '@/services/catalogueService';
+import {ApiError} from '@/services/apiClient';
 import {useTranslation} from '@/context';
 import type {CatalogueMedia} from '../../types';
 import {isVideo} from '../../utils/model';
 import styles from '../Workspace/Workspace.module.css';
 export function Asset({asset,large=false}:{asset:CatalogueMedia;large?:boolean}) {
- const [url,setUrl]=useState(''),[failed,setFailed]=useState(false),[visible,setVisible]=useState(large);const ref=useRef<HTMLSpanElement>(null);
+ const [url,setUrl]=useState(''),[errorKey,setErrorKey]=useState(''),[visible,setVisible]=useState(large);const ref=useRef<HTMLSpanElement>(null);
  const {t}=useTranslation();
  useEffect(()=>{if(large||visible)return;const node=ref.current;if(!node)return;const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){setVisible(true);observer.disconnect();}},{rootMargin:'300px'});observer.observe(node);return()=>observer.disconnect();},[large,visible]);
- useEffect(()=>{if(!visible&&!large)return;let active=true;catalogueService.url(asset.id).then(u=>{if(active)setUrl(u);}).catch(()=>{if(active)setFailed(true);});return()=>{active=false;};},[asset.id,large,visible]);
- if(failed)return <span>{t('catalogue.mediaError')}</span>;
+ useEffect(()=>{if(!visible&&!large)return;let active=true;catalogueService.url(asset.id).then(u=>{if(active)setUrl(u);}).catch(error=>{if(active)setErrorKey(error instanceof ApiError&&error.statusCode===401?'catalogue.mediaSignIn':error instanceof ApiError&&error.statusCode===404?'catalogue.mediaMissing':'catalogue.mediaError');});return()=>{active=false;};},[asset.id,large,visible]);
+ if(errorKey)return <span className={styles.mediaError} title={t(errorKey)}>{t(errorKey)}</span>;
  if(!url)return <span ref={ref} className={styles.placeholder}>{visible?t('common.loading'):null}</span>;
  return isVideo(asset)?<video src={url} controls={large} preload="metadata" playsInline className={large?styles.largeImage:styles.thumbImage}/>:<Image src={url} alt={asset.name} width={large?1600:220} height={large?1200:124} unoptimized className={large?styles.largeImage:styles.thumbImage}/>;
 }

@@ -10,12 +10,12 @@ import styles from '../Workspace/Workspace.module.css';
 export function BatchImport({designs,options,onSaved,onClose}:{designs:CatalogueDesign[];options:CatalogueOption[];onSaved:(d:CatalogueDesign[])=>void;onClose:()=>void}) {
  const {t}=useTranslation();const [items,setItems]=useState<ImportItem[]>([]),[defaults,setDefaults]=useState(blank),[ignored,setIgnored]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState(''),[progress,setProgress]=useState(''),[duplicate,setDuplicate]=useState('skip');
  async function stage(files:File[]) {setBusy(true);setError('');try{const r=await prepareImport(files);if(r.items.length>100)throw new Error('IMPORT_LIMIT');setItems(r.items);setIgnored(r.ignored);}catch(e){setError((e as Error).message==='IMPORT_LIMIT'?t('catalogue.importLimit'):(e as Error).message);}finally{setBusy(false);}}
- const existing=(name:string)=>designs.find(d=>d.code.toLowerCase()===name.toLowerCase()||d.name.toLowerCase()===name.toLowerCase());
+ const existing=(name:string)=>designs.find(d=>d.name.toLowerCase()===name.toLowerCase());
  async function run() {setBusy(true);setError('');try {
   if(!valid({...defaults,name:'import',code:'import'}))throw new Error(t('catalogue.invalid'));
   const pending:CatalogueDesign[]=[];let done=0;
   const targets=items.filter(item=>!existing(item.name)?.deletedAt&&!(existing(item.name)&&duplicate==='skip'));
-  for(const item of targets){const old=existing(item.name);const d=old?structuredClone(old):{...structuredClone(defaults),name:item.name,code:item.name};
+  for(const item of targets){const old=existing(item.name);const d=old?structuredClone(old):{...structuredClone(defaults),name:item.name,code:crypto.randomUUID()};
    if(old&&old.deletedAt)continue;
    for(const entry of item.files){setProgress(t('catalogue.importProgress',{current:++done,total:targets.reduce((n,i)=>n+i.files.length,0),name:item.name}));const id=await catalogueService.upload(entry.file);d.media.push({id,role:entry.role,name:entry.file.name});}
    pending.push(d);

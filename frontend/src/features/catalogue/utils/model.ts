@@ -18,7 +18,7 @@ export function display(d:CatalogueDesign,key:string):string {
 }
 export function valid(d:CatalogueDesign) {
  const m=d.size.match(/^(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)(?:\s*mm)?$/i);
- return !!(d.name.trim()&&d.code.trim()&&d.collection.trim()&&d.surface.trim()&&m&&+m[1]>0&&+m[2]>0&&+m[1]<=10000&&+m[2]<=10000&&+d.thickness>0&&+d.thickness<=100);
+ return !!(d.name.trim()&&d.collection.trim()&&d.surface.trim()&&m&&+m[1]>0&&+m[2]>0&&+m[1]<=10000&&+m[2]<=10000&&+d.thickness>0&&+d.thickness<=100);
 }
 export const variantFields = ['size','surface','body','thickness'] as const;
 export function facetValues(d:CatalogueDesign,key:string):string[] {
@@ -29,7 +29,7 @@ export function facetValues(d:CatalogueDesign,key:string):string[] {
 export type Filters={ values:Record<string,string[]>; presence:Record<string,string>; sort:string };
 export const emptyFilters=():Filters=>({values:{},presence:{},sort:'latest'});
 export function matches(d:CatalogueDesign,filters:Filters,search='') {
- if(search&&!`${d.name} ${d.code} ${d.extraName} ${d.alternateName}`.toLowerCase().includes(search.toLowerCase()))return false;
+ if(search&&!`${d.name} ${d.extraName} ${d.alternateName}`.toLowerCase().includes(search.toLowerCase()))return false;
  const variantFilters=Object.entries(filters.values).filter(([k,v])=>variantFields.includes(k as never)&&v.length);
  if(variantFilters.length&&![{size:d.size,surface:d.surface,body:d.body,thickness:d.thickness},...d.variants].some(spec=>variantFilters.every(([key,values])=>values.some(v=>spec[key as keyof typeof spec].toLowerCase()===v.toLowerCase()))))return false;
  for(const [key,values]of Object.entries(filters.values))if(values.length&&!variantFields.includes(key as never)&&!values.some(v=>facetValues(d,key).some(x=>x.toLowerCase()===v.toLowerCase())))return false;

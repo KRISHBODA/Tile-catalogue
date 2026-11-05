@@ -10,7 +10,7 @@ import {Dialog} from '../Workspace/Dialog';
 import styles from '../Workspace/Workspace.module.css';
 export type ActionMode='columns'|'export'|'download'|'delete';
 export function Actions({mode,designs,columns,onColumns,onSave,onClose}:{mode:ActionMode;designs:CatalogueDesign[];columns:string[];onColumns:(c:string[])=>void;onSave:(d:CatalogueDesign[])=>Promise<void>;onClose:()=>void}) {
- const {t}=useTranslation();const [keys,setKeys]=useState<string[]>(mode==='columns'?columns:mode==='download'?['tile-face','preview']:mode==='delete'?['design']:['name','code','size','collection','surface','body','thickness']);
+ const {t}=useTranslation();const [keys,setKeys]=useState<string[]>(mode==='columns'?columns:mode==='download'?['tile-face','preview']:mode==='delete'?['design']:['name','size','collection','surface','body','thickness']);
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const choices=mode==='download'?[...mediaRoles]:mode==='delete'?['design','preview','tags','body','360','live-image','live-video']:columnKeys;
  const toggle=(key:string)=>setKeys(v=>mode==='delete'?[key]:v.includes(key)?v.filter(x=>x!==key):[...v,key]);
@@ -22,7 +22,7 @@ export function Actions({mode,designs,columns,onColumns,onSave,onClose}:{mode:Ac
    const files:Record<string,Uint8Array>={};let total=0;
    for(const d of designs)for(const [index,m]of d.media.entries())if(keys.includes(m.role)){
     const blob=await catalogueService.blob(m.id);total+=blob.size;if(total>200*1024*1024)throw new Error(t('catalogue.downloadLimit'));
-    files[`${safeFileName(d.code)}/${m.role}/${index+1}-${safeFileName(m.name)}`]=new Uint8Array(await blob.arrayBuffer());
+    files[`${safeFileName(`${d.name}-${d.id}`)}/${m.role}/${index+1}-${safeFileName(m.name)}`]=new Uint8Array(await blob.arrayBuffer());
    }
    if(!Object.keys(files).length)throw new Error(t('catalogue.noDownload'));
    saveBlob(new Blob([new Uint8Array(zipSync(files,{level:0}))],{type:'application/zip'}),'tile-catalogue-media.zip');onClose();

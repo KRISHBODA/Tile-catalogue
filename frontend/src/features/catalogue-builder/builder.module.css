@@ -43,9 +43,9 @@
 .indexProduct strong{font-size:15px;font-weight:600}
 .indexProduct span{font-size:10px;color:#666;letter-spacing:.04em}
 .indexFooter{margin-top:auto;padding-top:15px;border-top:1px solid #222}
-.productPage{display:grid;grid-template-columns:.92fr 1.08fr;gap:4%;padding:3%}
-.tileHero{position:relative;min-width:0;min-height:0;display:grid;place-items:center;margin-bottom:-3%;border:0;background:transparent;overflow:visible}
-.tileHero img{display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom}
+.productPage{display:grid;grid-template-columns:.92fr 1.08fr;grid-template-rows:1fr;gap:4%;padding:3% 3% 0 3%}
+.tileHero{position:relative;min-width:0;min-height:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;margin:0;border:0;background:transparent;overflow:visible}
+.tileHero img,.tileHero [data-print-image]{display:block;width:100%;height:100%;max-height:100%;object-fit:contain;object-position:center bottom}
 .tileHero .flaisSeal{position:absolute;z-index:3;top:50%;right:-12.5mm;bottom:auto;width:25mm;height:25mm;padding:0;border-radius:50%;background:#fff;object-fit:contain;clip-path:circle(50%);transform:translateY(-50%)}
 .missingTile{font-size:16px;color:#777}
 .productDetails{position:relative;display:flex;flex-direction:column;min-width:0;padding:2% 1% 4% 0}
@@ -70,8 +70,8 @@
 .roomPage>img{display:block;width:100%;height:calc(100% - 14mm);object-fit:cover}
 .roomCaption{height:14mm;background:#fff;padding:0 6%;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;text-transform:uppercase}
 .roomCaption span{font-size:9px;font-weight:400;color:#666}
-@media(max-width:760px){.previewSheet{padding:10px}.cataloguePage{width:100%}.portraitPage{width:min(100%,600px)}.landscapePage,.indexArtworkPage{width:100%}.productPage{grid-template-columns:1.05fr .95fr}.randomGrid img{height:64px}.indexRow{grid-template-columns:24px 38px minmax(0,1fr) 26px;gap:8px}.indexSwatch{width:38px;height:38px}}
-@media print{html,body{width:auto!important;min-height:0!important;margin:0!important;padding:0!important;background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.builder{display:block!important;width:auto!important;min-height:0!important;padding:0!important;margin:0!important;background:#fff!important}.previewSheet{display:block!important;width:auto!important;padding:0!important;margin:0!important;gap:0!important;border:0!important;background:#fff!important}.previewToolbar,.previewRemark{display:none!important}.cataloguePage{display:block!important;max-width:none!important;margin:0!important;box-shadow:none!important;break-after:page!important;page-break-after:always!important;break-inside:avoid!important;page-break-inside:avoid!important}.portraitPage{page:portraitSheet;width:275.52mm!important;height:390mm!important;aspect-ratio:auto!important}.landscapePage{page:landscapeSheet;width:390mm!important;height:275.52mm!important;aspect-ratio:auto!important}.indexArtworkPage{page:indexSheet;width:420mm!important;height:297mm!important;aspect-ratio:auto!important}.cataloguePage:last-child{break-after:auto!important;page-break-after:auto!important}.fullPageArtwork{width:100%!important;height:100%!important;object-fit:fill!important}.indexPage{padding:9%!important}.productPage{display:grid!important;grid-template-columns:1.12fr .88fr!important;gap:5%!important;padding:3%!important}.tileHero img,.randomGrid img{image-rendering:auto!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.roomPage>img{height:calc(100% - 14mm)!important;object-fit:cover!important}.roomCaption{height:14mm!important}}
+@media(max-width:760px){.previewSheet{padding:10px}.cataloguePage{width:100%}.portraitPage{width:min(100%,600px)}.landscapePage,.indexArtworkPage{width:100%}.productPage{grid-template-columns:1.05fr .95fr;grid-template-rows:1fr;padding:3% 3% 0 3%}.randomGrid img{height:64px}.indexRow{grid-template-columns:24px 38px minmax(0,1fr) 26px;gap:8px}.indexSwatch{width:38px;height:38px}}
+@media print{html,body{width:auto!important;min-height:0!important;margin:0!important;padding:0!important;background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.builder{display:block!important;width:auto!important;min-height:0!important;padding:0!important;margin:0!important;background:#fff!important}.previewSheet{display:block!important;width:auto!important;padding:0!important;margin:0!important;gap:0!important;border:0!important;background:#fff!important}.previewToolbar,.previewRemark{display:none!important}.cataloguePage{display:block!important;max-width:none!important;margin:0!important;box-shadow:none!important;break-after:page!important;page-break-after:always!important;break-inside:avoid!important;page-break-inside:avoid!important}.portraitPage{page:portraitSheet;width:275.52mm!important;height:390mm!important;aspect-ratio:auto!important}.landscapePage{page:landscapeSheet;width:390mm!important;height:275.52mm!important;aspect-ratio:auto!important}.indexArtworkPage{page:indexSheet;width:420mm!important;height:297mm!important;aspect-ratio:auto!important}.cataloguePage:last-child{break-after:auto!important;page-break-after:auto!important}.fullPageArtwork{width:100%!important;height:100%!important;object-fit:fill!important}.indexPage{padding:9%!important}.productPage{display:grid!important;grid-template-columns:.92fr 1.08fr!important;grid-template-rows:1fr!important;gap:4%!important;padding:3% 3% 0 3%!important}.tileHero img,.randomGrid img{image-rendering:auto!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.roomPage>img{height:calc(100% - 14mm)!important;object-fit:cover!important}.roomCaption{height:14mm!important}}
 
 /* Endless 2026 artwork follows its original A4 cover and A3 landscape page sizes. */
 @page coverSheet{size:210mm 297mm;margin:0}
@@ -124,7 +124,7 @@
 .roomPage>[data-print-image]{height:279mm!important}
 .roomPage{display:flex!important;flex-direction:column!important}
 .roomCaption{height:18mm!important}
-.productPage{grid-template-columns:.92fr 1.08fr!important;gap:4%!important}
+.productPage{grid-template-columns:.92fr 1.08fr!important;grid-template-rows:1fr!important;gap:4%!important;padding:3% 3% 0 3%!important}
 .productDetails{overflow:visible!important}
 .randomGrid img{height:96mm!important}
 .technicalPage .fullPageArtwork{object-fit:fill!important}

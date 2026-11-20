@@ -2,6 +2,12 @@ import { apiClient } from './apiClient';
 import type { CatalogueDesign, CatalogueOption } from '@/features/catalogue';
 const base='/catalogue';
 const blobs=new Map<string,Promise<string>>();
+export type CataloguePdfStatus='GENERATING'|'READY'|'FAILED';
+export interface CatalogueHistoryRecord {
+ id:string;name:string;createdAt:string;generatedAt:string|null;generatedBy:string;assignedTo:string;
+ pdfSize:string|null;status:CataloguePdfStatus;config:Record<string,unknown>;
+}
+export type NewCatalogueHistory={name:string;assignedTo?:string;config:Record<string,unknown>};
 async function mediaResponse(id:string) {
  const path=base+'/media/'+encodeURIComponent(id);
  const info=await apiClient.get<{size:number;chunkSize:number}>(path+'/info');
@@ -12,6 +18,10 @@ async function mediaResponse(id:string) {
 export const catalogueService={
  list:()=>apiClient.get<CatalogueDesign[]>(base),
  save:(designs:Partial<CatalogueDesign>[])=>apiClient.post<CatalogueDesign[]>(base,{designs}),
+ history:()=>apiClient.get<CatalogueHistoryRecord[]>(base+'/history'),
+ createHistory:(entry:NewCatalogueHistory)=>apiClient.post<CatalogueHistoryRecord>(base+'/history',entry),
+ updateHistoryStatus:(id:string,status:Exclude<CataloguePdfStatus,'GENERATING'>)=>apiClient.put<CatalogueHistoryRecord>(base+'/history/'+encodeURIComponent(id)+'/status',{status}),
+ deleteHistory:(id:string)=>apiClient.delete<{deleted:boolean}>(base+'/history/'+encodeURIComponent(id)),
  options:()=>apiClient.get<CatalogueOption[]>(base+'/options'),
  option:(option:Partial<CatalogueOption>,remove=false)=>apiClient.post<CatalogueOption[]>(base+'/options',{option,remove}),
  async upload(file:File) {

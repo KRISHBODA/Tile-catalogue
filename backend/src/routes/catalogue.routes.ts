@@ -1,12 +1,17 @@
 import { Router, raw } from 'express';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import { catalogueController as c } from '../controllers/catalogue.controller.js';
+import { catalogueHistoryController as history } from '../controllers/catalogue-history.controller.js';
 const router: Router=Router();
 router.use(authenticate);
 router.get('/',c.list);
 router.post('/',c.save);
 router.get('/options',c.options);
 router.post('/options',c.option);
+router.get('/history',history.list);
+router.post('/history',history.create);
+router.put('/history/:id/status',history.updateStatus);
+router.delete('/history/:id',history.remove);
 router.post('/media',raw({type:'application/octet-stream',limit:'50mb'}),c.upload);
 router.post('/media/uploads/:upload/finish',c.finishUpload);
 router.post('/media/uploads/:upload/:index',raw({type:'application/octet-stream',limit:'3mb'}),c.uploadPart);

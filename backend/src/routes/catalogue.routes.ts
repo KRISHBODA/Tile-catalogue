@@ -12,7 +12,7 @@ router.get('/history',history.list);
 router.post('/history',history.create);
 router.put('/history/:id/status',history.updateStatus);
 router.delete('/history/:id',history.remove);
-router.post('/media',raw({type:'application/octet-stream',limit:'50mb'}),c.upload);
+router.post('/media',raw({type:'application/octet-stream',limit:'2gb'}),c.upload);
 router.post('/media/uploads/:upload/finish',c.finishUpload);
 router.post('/media/uploads/:upload/:index',raw({type:'application/octet-stream',limit:'3mb'}),c.uploadPart);
 router.get('/media/:id/info',c.mediaInfo);

@@ -112,9 +112,6 @@ export function ProductEditor({
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
-        if (file.size > 10 * 1024 * 1024)
-          throw new Error(`${file.name}: images must be 10 MB or smaller.`);
-        
         // Use client-side object URL for preview without backend API route
         const previewUrl = URL.createObjectURL(file);
         const asset: MediaAsset = {
@@ -368,8 +365,7 @@ export function ProductEditor({
                     ))}
                   </div>
                   <p className="asset-note">
-                    PNG, JPEG or WebP · Up to 10 MB each. Save the design to
-                    keep its images.
+                    PNG, JPEG or WebP. Save the design to keep its images.
                   </p>
                 </section>
               </div>
@@ -517,9 +513,8 @@ export function ProductEditor({
                   {uploadControl("closeup", "Upload closeups")}
                 </div>
                 <p className="asset-note">
-                  PNG, JPEG or WebP · Up to 10 MB each. Originals retain their
-                  colours. Images are stored locally; save the product to attach
-                  them.
+                  PNG, JPEG or WebP. Originals retain their colours. Images are
+                  stored locally; save the product to attach them.
                 </p>
                 {!allMedia.length && (
                   <div className="media-empty">
